@@ -6,6 +6,9 @@ const ACCESS_TOKEN = 'thisisjustarandomstring'
 interface AuthUser {
   accountNo: string
   email: string
+  name: string
+  username: string
+  profileImage?: string | null
   role: string[]
   exp: number
 }

@@ -1,10 +1,13 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { z } from 'zod'
+import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, UserPlus, User, X } from 'lucide-react'
 import { toast } from 'sonner'
-import { sleep, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import api from '@/lib/api'
+import { useAuthStore } from '@/stores/auth-store'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -54,6 +57,8 @@ export function SignUpForm({
 }: React.HTMLAttributes<HTMLFormElement>) {
   const [isLoading, setIsLoading] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const navigate = useNavigate()
+  const { auth: authStore } = useAuthStore()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -68,19 +73,110 @@ export function SignUpForm({
     },
   })
 
+  const username = form.watch('username')
+
+  useEffect(() => {
+    if (!username) {
+      if (form.formState.errors.username?.type === 'manual') {
+        form.clearErrors('username')
+      }
+      return
+    }
+
+    const timer = setTimeout(async () => {
+      try {
+        const res = await api.get(
+          `/users?username=${username}`
+        )
+        if (res.data.length > 0) {
+          form.setError('username', {
+            type: 'manual',
+            message: 'Username already taken.',
+          })
+        } else {
+          if (form.formState.errors.username?.type === 'manual') {
+            form.clearErrors('username')
+          }
+        }
+      } catch (error) {
+        console.error('Error checking username', error)
+      }
+    }, 500)
+
+    return () => clearTimeout(timer)
+  }, [username, form])
+
   useScrollToError(form.formState.errors)
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
-      loading: 'Creating account...',
-      success: () => {
-        setIsLoading(false)
-        return `Account created for ${data.email}.`
-      },
-      error: 'Error',
-    })
+    toast.promise(
+      Promise.all([
+        api.get(`/users?email=${data.email}`),
+        api.get(`/users?username=${data.username}`)
+      ]).then(([emailRes, usernameRes]) => {
+        if (emailRes.data.length > 0) {
+          form.setError('email', {
+            type: 'manual',
+            message: 'Email already in use.',
+          })
+          setTimeout(() => form.setFocus('email'), 0)
+          throw new Error('Email already in use.')
+        }
+        if (usernameRes.data.length > 0) {
+          form.setError('username', {
+            type: 'manual',
+            message: 'Username already taken.',
+          })
+          setTimeout(() => form.setFocus('username'), 0)
+          throw new Error('Username already taken.')
+        }
+
+        // Remove confirmPassword before saving
+        const { confirmPassword, profileImage, ...userData } = data
+
+        const newUser = {
+          id: crypto.randomUUID(),
+          profileImage: preview || null,
+          ...userData,
+          password: btoa(userData.password),
+        }
+        return api.post('/users', newUser)
+      }),
+      {
+        loading: 'Creating account...',
+        success: (res) => {
+          setIsLoading(false)
+          const user = res.data
+
+          const mockUser = {
+            accountNo: user.id,
+            email: user.email,
+            name: user.name,
+            username: user.username,
+            profileImage: user.profileImage,
+            role: ['user'],
+            exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
+          }
+
+          authStore.setUser(mockUser)
+          const mockToken = btoa(
+            JSON.stringify({ id: user.id, email: user.email, exp: mockUser.exp })
+          )
+          authStore.setAccessToken(mockToken)
+
+          // Navigate to home page
+          navigate({ to: '/' })
+
+          return `Account created for ${data.email}.`
+        },
+        error: (err) => {
+          setIsLoading(false)
+          return err.message || 'Error creating account.'
+        },
+      }
+    )
   }
 
   return (

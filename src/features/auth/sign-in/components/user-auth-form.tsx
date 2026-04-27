@@ -6,7 +6,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
-import { sleep, cn } from '@/lib/utils'
+import { cn } from '@/lib/utils'
+import api from '@/lib/api'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import {
@@ -84,31 +85,56 @@ export function UserAuthForm({
   function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
 
-    toast.promise(sleep(2000), {
-      loading: 'Signing in...',
-      success: () => {
-        setIsLoading(false)
-
-        // Mock successful authentication with expiry computed at success time
-        const mockUser = {
-          accountNo: 'ACC001',
-          email: data.email,
-          role: ['user'],
-          exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
+    toast.promise(
+      api.get(`/users?email=${data.email}&password=${btoa(data.password)}`).then(async (res) => {
+        if (res.data.length === 0) {
+          form.setError('email', {
+            type: 'manual',
+            message: 'Invalid email or password.',
+          })
+          form.setError('password', {
+            type: 'manual',
+            message: 'Invalid email or password.',
+          })
+          setTimeout(() => form.setFocus('email'), 0)
+          throw new Error('Invalid email or password.')
         }
+        return res.data[0]
+      }),
+      {
+        loading: 'Signing in...',
+        success: (user) => {
+          setIsLoading(false)
 
-        // Set user and access token
-        authStore.setUser(mockUser)
-        authStore.setAccessToken('mock-access-token')
+          // Mock successful authentication with expiry computed at success time
+          const mockUser = {
+            accountNo: user.id,
+            email: user.email,
+            name: user.name,
+            username: user.username,
+            profileImage: user.profileImage,
+            role: ['user'],
+            exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
+          }
 
-        // Redirect to the stored location or default to dashboard
-        const targetPath = redirectTo || '/'
-        navigate({ to: targetPath, replace: true })
+          // Set user and access token
+          authStore.setUser(mockUser)
+          // Generate a mock JWT-like token (Base64 encoded string)
+          const mockToken = btoa(JSON.stringify({ id: user.id, email: user.email, exp: mockUser.exp }))
+          authStore.setAccessToken(mockToken)
 
-        return `Welcome back, ${data.email}!`
-      },
-      error: 'Error',
-    })
+          // Redirect to the stored location or default to dashboard
+          const targetPath = redirectTo || '/'
+          navigate({ to: targetPath, replace: true })
+
+          return `Welcome back, ${user.email}!`
+        },
+        error: (err) => {
+          setIsLoading(false)
+          return err.message || 'Error signing in.'
+        },
+      }
+    )
   }
 
   return (
