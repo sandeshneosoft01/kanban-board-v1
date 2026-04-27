@@ -16,8 +16,18 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Link } from '@tanstack/react-router'
+import { useTaskStore } from '@/stores/task-store'
 
 export function Dashboard() {
+  const tasks = useTaskStore((state) => state.tasks)
+  
+  const totalTasks = tasks.length
+  const completedTasks = tasks.filter((task) => task.stage === 'done').length
+  const pendingTasks = totalTasks - completedTasks
+
+  const completedPercentage = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0
+  const pendingPercentage = totalTasks > 0 ? Math.round((pendingTasks / totalTasks) * 100) : 0
+
   return (
     <>
       {/* ===== Top Heading ===== */}
@@ -50,14 +60,14 @@ export function Dashboard() {
                 </div>
                 <div className='flex items-center gap-1 text-sm font-medium text-emerald-600'>
                   <TrendingUp className='h-4 w-4' />
-                  <span>12%</span>
+                  <span>100%</span>
                 </div>
               </div>
               <div className='mt-4'>
                 <p className='text-xs font-semibold tracking-wider text-muted-foreground uppercase'>
                   Total Tasks
                 </p>
-                <h3 className='mt-1 text-3xl font-bold'>124</h3>
+                <h3 className='mt-1 text-3xl font-bold'>{totalTasks}</h3>
               </div>
             </CardContent>
           </Card>
@@ -69,14 +79,14 @@ export function Dashboard() {
                 </div>
                 <div className='flex items-center gap-1 text-sm font-medium text-emerald-600'>
                   <TrendingUp className='h-4 w-4' />
-                  <span>8%</span>
+                  <span>{completedPercentage}%</span>
                 </div>
               </div>
               <div className='mt-4'>
                 <p className='text-xs font-semibold tracking-wider text-muted-foreground uppercase'>
                   Completed
                 </p>
-                <h3 className='mt-1 text-3xl font-bold'>86</h3>
+                <h3 className='mt-1 text-3xl font-bold'>{completedTasks}</h3>
               </div>
             </CardContent>
           </Card>
@@ -86,16 +96,16 @@ export function Dashboard() {
                 <div className='flex h-12 w-12 items-center justify-center rounded-xl bg-amber-50 text-amber-600 dark:bg-amber-900/20 dark:text-amber-400'>
                   <Clock className='h-6 w-6' />
                 </div>
-                <div className='flex items-center gap-1 rounded-full bg-amber-50 px-2.5 py-0.5 text-xs font-medium text-amber-600 dark:bg-amber-900/30 dark:text-amber-400'>
-                  <Clock className='mr-1 h-3 w-3' />
-                  Active
+                <div className='flex items-center gap-1 text-sm font-medium text-amber-600'>
+                  <TrendingUp className='h-4 w-4' />
+                  <span>{pendingPercentage}%</span>
                 </div>
               </div>
               <div className='mt-4'>
                 <p className='text-xs font-semibold tracking-wider text-muted-foreground uppercase'>
                   Pending
                 </p>
-                <h3 className='mt-1 text-3xl font-bold'>38</h3>
+                <h3 className='mt-1 text-3xl font-bold'>{pendingTasks}</h3>
               </div>
             </CardContent>
           </Card>
