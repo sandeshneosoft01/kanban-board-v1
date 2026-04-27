@@ -12,10 +12,17 @@ import { CreateEditTaskDialog } from './components/create-edit-task-dialog'
 import { KanbanBoard } from './components/kanban-board'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 
+import { useTaskStore } from '@/stores/task-store'
+
 export function TaskManagement() {
     const search = useSearch({ strict: false }) as { createTask?: boolean }
     const navigate = useNavigate()
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(() => !!search.createTask)
+    const fetchTasks = useTaskStore((state) => state.fetchTasks)
+
+    useEffect(() => {
+        fetchTasks()
+    }, [fetchTasks])
 
     useEffect(() => {
         if (search.createTask) {

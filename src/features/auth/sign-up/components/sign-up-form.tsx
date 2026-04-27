@@ -175,7 +175,6 @@ export function SignUpForm({
             name: user.name,
             username: user.username,
             profileImage: user.profileImage,
-            role: ['user'],
             exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
           }
 
@@ -186,7 +185,7 @@ export function SignUpForm({
           authStore.setAccessToken(mockToken)
 
           // Navigate to home page
-          navigate({ to: '/' })
+          navigate({ to: '/', replace: true })
 
           return `Account created for ${data.email}.`
         },

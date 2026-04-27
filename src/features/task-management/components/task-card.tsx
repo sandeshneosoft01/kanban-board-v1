@@ -239,10 +239,9 @@ export const TaskCard = memo(function TaskCard({
         }
         confirmText='Delete'
         destructive
-        handleConfirm={() => {
-          deleteTask(task.id)
+        handleConfirm={async () => {
+          await deleteTask(task.id)
           setIsDeleteOpen(false)
-          toast.success('Task deleted')
         }}
       />
     </>

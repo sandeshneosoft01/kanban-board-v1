@@ -90,31 +90,31 @@ export function CreateEditTaskDialog({
 
   const onSubmit = async (values: TaskFormValues) => {
     setIsLoading(true)
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, isEdit ? 500 : 1500))
 
-    if (isEdit && task) {
-      updateTask(task.id, {
-        name: values.taskName,
-        priority: values.priority as TaskPriority,
-        deadline: values.deadline,
-        description: values.description,
-      })
-      toast.success('Task updated successfully!')
-    } else {
-      addTask({
-        name: values.taskName,
-        priority: values.priority as TaskPriority,
-        deadline: values.deadline,
-        description: values.description,
-        stage: 'backlog',
-      })
-      toast.success('Task created successfully!')
+    try {
+      if (isEdit && task) {
+        await updateTask(task.id, {
+          name: values.taskName,
+          priority: values.priority as TaskPriority,
+          deadline: values.deadline.toISOString(),
+          description: values.description,
+        })
+      } else {
+        await addTask({
+          name: values.taskName,
+          priority: values.priority as TaskPriority,
+          deadline: values.deadline.toISOString(),
+          description: values.description,
+          stage: 'backlog',
+        })
+      }
+      form.reset()
+      onOpenChange(false)
+    } catch (error) {
+      console.error('Failed to save task:', error)
+    } finally {
+      setIsLoading(false)
     }
-
-    setIsLoading(false)
-    form.reset()
-    onOpenChange(false)
   }
 
   return (

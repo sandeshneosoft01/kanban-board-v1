@@ -1,3 +1,4 @@
+import { useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -20,7 +21,12 @@ import { useTaskStore } from '@/stores/task-store'
 
 export function Dashboard() {
   const tasks = useTaskStore((state) => state.tasks)
-  
+  const fetchTasks = useTaskStore((state) => state.fetchTasks)
+
+  useEffect(() => {
+    fetchTasks()
+  }, [fetchTasks])
+
   const totalTasks = tasks.length
   const completedTasks = tasks.filter((task) => task.stage === 'done').length
   const pendingTasks = totalTasks - completedTasks

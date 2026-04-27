@@ -115,7 +115,6 @@ export function UserAuthForm({
             name: user.name,
             username: user.username,
             profileImage: user.profileImage,
-            role: ['user'],
             exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
           }
 

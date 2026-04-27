@@ -79,10 +79,9 @@ export function KanbanBoard() {
     draggedTaskRef.current = null
   }, [])
 
-  const handleConfirmDelete = useCallback(() => {
+  const handleConfirmDelete = useCallback(async () => {
     if (pendingDeleteTask) {
-      deleteTask(pendingDeleteTask.id)
-      toast.success('Task deleted')
+      await deleteTask(pendingDeleteTask.id)
     }
     setPendingDeleteTask(null)
     setShowDeleteConfirm(false)

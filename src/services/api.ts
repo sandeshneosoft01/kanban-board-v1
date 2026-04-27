@@ -1,6 +1,5 @@
 import { useAuthStore } from '@/stores/auth-store'
 import axios from 'axios'
-import { toast } from 'sonner'
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000'
 
@@ -11,7 +10,7 @@ export const api = axios.create({
     },
 })
 
-const pendingRequests: Record<string, NodeJS.Timeout> = {}
+const pendingRequests: Record<string, ReturnType<typeof setTimeout>> = {}
 
 // ✅ REQUEST INTERCEPTOR
 api.interceptors.request.use(
@@ -19,12 +18,12 @@ api.interceptors.request.use(
         const token = useAuthStore.getState().auth.accessToken
         const requestId = config.url || Math.random().toString()
 
-        // Show a warning toast if the server is taking too long (useful for json-server or slow networks)
-        pendingRequests[requestId] = setTimeout(() => {
-            toast.warning(
-                'Server is taking a while to respond. Please wait a moment.'
-            )
-        }, 5000)
+            // Show a warning toast if the server is taking too long (useful for json-server or slow networks)
+            // pendingRequests[requestId] = setTimeout(() => {
+            //     toast.warning(
+            //         'Server is taking a while to respond. Please wait a moment.'
+            //     )
+            // }, 5000)
 
             ; (config as any)._requestId = requestId
 
