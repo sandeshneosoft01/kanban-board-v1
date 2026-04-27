@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, LogIn } from 'lucide-react'
@@ -191,12 +191,12 @@ export function UserAuthForm({
                   Remember Me
                 </label>
               </div>
-              <Link
+              {/* <Link
                 to='/forgot-password'
                 className='text-sm font-medium text-primary hover:underline'
               >
                 Forgot Your Password?
-              </Link>
+              </Link> */}
             </div>
           )}
         />

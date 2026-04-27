@@ -15,9 +15,11 @@ import { ProfileDropdown } from '@/components/profile-dropdown'
 import { useTaskStore } from '@/stores/task-store'
 
 export function TaskManagement() {
-    const search = useSearch({ strict: false }) as { createTask?: boolean }
+    const search = useSearch({ strict: false }) as { createTask?: boolean; taskId?: string }
     const navigate = useNavigate()
+    const tasks = useTaskStore((state) => state.tasks)
     const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(() => !!search.createTask)
+    const [selectedTask, setSelectedTask] = useState<any>(null)
     const fetchTasks = useTaskStore((state) => state.fetchTasks)
 
     useEffect(() => {
@@ -28,11 +30,23 @@ export function TaskManagement() {
         if (search.createTask) {
             navigate({
                 to: '.',
-                search: (prev) => ({ ...prev, createTask: undefined }),
+                search: (prev: any) => ({ ...prev, createTask: undefined }),
                 replace: true,
             })
         }
-    }, [search.createTask, navigate])
+        if (search.taskId) {
+            const task = tasks.find((t) => t.id === search.taskId)
+            if (task) {
+                setSelectedTask(task)
+                setIsCreateDialogOpen(true)
+            }
+            navigate({
+                to: '.',
+                search: (prev: any) => ({ ...prev, taskId: undefined }),
+                replace: true,
+            })
+        }
+    }, [search.createTask, search.taskId, navigate, tasks])
 
     return (
         <>
@@ -56,7 +70,10 @@ export function TaskManagement() {
                             Drag and drop tasks between stages to update their progress.
                         </p>
                     </div>
-                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                    <Button onClick={() => {
+                        setSelectedTask(null)
+                        setIsCreateDialogOpen(true)
+                    }}>
                         <PlusIcon className="h-4 w-4" />
                         Create Task
                     </Button>
@@ -66,7 +83,11 @@ export function TaskManagement() {
 
                 <CreateEditTaskDialog
                     open={isCreateDialogOpen}
-                    onOpenChange={setIsCreateDialogOpen}
+                    onOpenChange={(open) => {
+                        setIsCreateDialogOpen(open)
+                        if (!open) setSelectedTask(null)
+                    }}
+                    task={selectedTask}
                 />
             </Main>
         </>

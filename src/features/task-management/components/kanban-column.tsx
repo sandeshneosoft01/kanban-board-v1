@@ -11,6 +11,7 @@ import {
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { TaskCard } from './task-card'
+import { useSearch } from '@/context/search-provider'
 
 const stageIcons: Record<TaskStage, React.ReactNode> = {
   backlog: <Archive className='h-4 w-4' />,
@@ -102,6 +103,7 @@ export function KanbanColumn({
 }: KanbanColumnProps) {
   const [isDragOver, setIsDragOver] = useState(false)
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
+  const { searchQuery } = useSearch()
   const colors = stageColors[stage]
 
   const tasks = useTaskStore(
@@ -120,10 +122,15 @@ export function KanbanColumn({
     }
   }, [])
 
-  // Sort tasks by their order field
+  // Sort tasks by their order field and filter by search query
   const sortedTasks = useMemo(
-    () => [...tasks].sort((a, b) => a.order - b.order),
-    [tasks]
+    () =>
+      tasks
+        .filter((task) =>
+          task.name.toLowerCase().includes(searchQuery.toLowerCase())
+        )
+        .sort((a, b) => a.order - b.order),
+    [tasks, searchQuery]
   )
 
   const estimateSize = useCallback(() => 140, [])

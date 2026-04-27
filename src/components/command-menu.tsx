@@ -14,11 +14,14 @@ import {
 } from '@/components/ui/command'
 import { sidebarData } from './layout/data/sidebar-data'
 import { ScrollArea } from './ui/scroll-area'
+import { useTaskStore, STAGE_LABELS } from '@/stores/task-store'
+import { CheckCircle2 } from 'lucide-react'
 
 export function CommandMenu() {
   const navigate = useNavigate()
   const { setTheme } = useTheme()
-  const { open, setOpen } = useSearch()
+  const { open, setOpen, searchQuery, setSearchQuery } = useSearch()
+  const tasks = useTaskStore((state) => state.tasks)
 
   const runCommand = React.useCallback(
     (command: () => unknown) => {
@@ -30,12 +33,16 @@ export function CommandMenu() {
 
   return (
     <CommandDialog modal open={open} onOpenChange={setOpen}>
-      <CommandInput placeholder='Type a command or search...' />
+      <CommandInput
+        placeholder='Type a command or search...'
+        value={searchQuery}
+        onValueChange={setSearchQuery}
+      />
       <CommandList>
         <ScrollArea type='hover' className='h-72 pe-1'>
           <CommandEmpty>No results found.</CommandEmpty>
-          {sidebarData.navGroups.map((group) => (
-            <CommandGroup key={group.title} heading={group.title}>
+          {sidebarData.navGroups.map((group, index) => (
+            <CommandGroup key={index}>
               {group.items.map((navItem, i) => {
                 if (navItem.url)
                   return (
@@ -70,6 +77,33 @@ export function CommandMenu() {
               })}
             </CommandGroup>
           ))}
+          <CommandSeparator />
+          <CommandGroup heading='Tasks'>
+            {tasks.map((task) => (
+              <CommandItem
+                key={task.id}
+                value={`${task.name} ${STAGE_LABELS[task.stage]}`}
+                onSelect={() => {
+                  runCommand(() =>
+                    navigate({
+                      to: '/task-management',
+                      search: { taskId: task.id },
+                    })
+                  )
+                }}
+              >
+                <div className='flex size-4 items-center justify-center'>
+                  <CheckCircle2 className='size-3 text-muted-foreground/80' />
+                </div>
+                <div className='flex flex-col'>
+                  <span>{task.name}</span>
+                  <span className='text-[10px] text-muted-foreground'>
+                    {STAGE_LABELS[task.stage]}
+                  </span>
+                </div>
+              </CommandItem>
+            ))}
+          </CommandGroup>
           <CommandSeparator />
           <CommandGroup heading='Theme'>
             <CommandItem onSelect={() => runCommand(() => setTheme('light'))}>

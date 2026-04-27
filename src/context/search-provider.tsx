@@ -4,6 +4,8 @@ import { CommandMenu } from '@/components/command-menu'
 type SearchContextType = {
   open: boolean
   setOpen: React.Dispatch<React.SetStateAction<boolean>>
+  searchQuery: string
+  setSearchQuery: React.Dispatch<React.SetStateAction<string>>
 }
 
 const SearchContext = createContext<SearchContextType | null>(null)
@@ -14,6 +16,7 @@ type SearchProviderProps = {
 
 export function SearchProvider({ children }: SearchProviderProps) {
   const [open, setOpen] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const down = (e: KeyboardEvent) => {
@@ -27,7 +30,7 @@ export function SearchProvider({ children }: SearchProviderProps) {
   }, [])
 
   return (
-    <SearchContext value={{ open, setOpen }}>
+    <SearchContext value={{ open, setOpen, searchQuery, setSearchQuery }}>
       {children}
       <CommandMenu />
     </SearchContext>
