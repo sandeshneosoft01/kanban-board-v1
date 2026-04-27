@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
 import { showSubmittedData } from '@/lib/show-submitted-data'
 import { cn } from '@/lib/utils'
+import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -38,6 +39,8 @@ export function OtpForm({ className, ...props }: OtpFormProps) {
     resolver: zodResolver(formSchema),
     defaultValues: { otp: '' },
   })
+
+  useScrollToError(form.formState.errors)
 
   // eslint-disable-next-line react-hooks/incompatible-library
   const otp = form.watch('otp')

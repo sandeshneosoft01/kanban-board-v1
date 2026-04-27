@@ -6,6 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { sleep, cn } from '@/lib/utils'
+import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -34,6 +35,8 @@ export function ForgotPasswordForm({
     resolver: zodResolver(formSchema),
     defaultValues: { email: '' },
   })
+
+  useScrollToError(form.formState.errors)
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)

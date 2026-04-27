@@ -5,6 +5,7 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { Loader2, UserPlus, User, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { sleep, cn } from '@/lib/utils'
+import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import {
@@ -66,6 +67,8 @@ export function SignUpForm({
       profileImage: undefined,
     },
   })
+
+  useScrollToError(form.formState.errors)
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)

@@ -7,6 +7,7 @@ import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { sleep, cn } from '@/lib/utils'
+import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -52,6 +53,8 @@ export function UserAuthForm({
       password: '',
     },
   })
+
+  useScrollToError(form.formState.errors)
 
   function onSubmit(data: z.infer<typeof formSchema>) {
     setIsLoading(true)
