@@ -87,7 +87,7 @@ export function CommandMenu() {
                   runCommand(() =>
                     navigate({
                       to: '/task-management',
-                      search: { taskId: task.id },
+                      search: { taskId: String(task.id) },
                     })
                   )
                 }}

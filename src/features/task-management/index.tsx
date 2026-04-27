@@ -35,7 +35,7 @@ export function TaskManagement() {
             })
         }
         if (search.taskId) {
-            const task = tasks.find((t) => t.id === search.taskId)
+            const task = tasks.find((t) => String(t.id) === search.taskId)
             if (task) {
                 setSelectedTask(task)
                 setIsCreateDialogOpen(true)
