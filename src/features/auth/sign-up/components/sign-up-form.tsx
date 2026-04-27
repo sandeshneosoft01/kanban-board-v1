@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { Loader2, UserPlus, User, X } from 'lucide-react'
+import { Loader2, UserPlus, User, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import api from '@/services/api'
@@ -28,7 +28,14 @@ const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 const formSchema = z
   .object({
     name: z.string().min(1, 'Please enter your name.'),
-    username: z.string().min(1, 'Please enter a username.'),
+    username: z
+      .string()
+      .min(3, 'Username must be at least 3 characters.')
+      .max(20, 'Username must be at most 20 characters.')
+      .regex(
+        /^[a-z0-9_]+$/,
+        'Username can only contain lowercase letters, numbers, and underscores.'
+      ),
     email: z.email({
       error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
     }),
@@ -57,6 +64,8 @@ export function SignUpForm({
 }: React.HTMLAttributes<HTMLFormElement>) {
   const [isLoading, setIsLoading] = useState(false)
   const [preview, setPreview] = useState<string | null>(null)
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false)
+  const [isUsernameAvailable, setIsUsernameAvailable] = useState(false)
   const navigate = useNavigate()
   const { auth: authStore } = useAuthStore()
 
@@ -76,30 +85,40 @@ export function SignUpForm({
   const username = form.watch('username')
 
   useEffect(() => {
+    setIsUsernameAvailable(false)
     if (!username) {
+      setIsCheckingUsername(false)
       if (form.formState.errors.username?.type === 'manual') {
         form.clearErrors('username')
       }
       return
     }
 
+    if (username.length < 3 || !/^[a-z0-9_]+$/.test(username)) {
+      setIsCheckingUsername(false)
+      return
+    }
+
+    setIsCheckingUsername(true)
     const timer = setTimeout(async () => {
       try {
-        const res = await api.get(
-          `/users?username=${username}`
-        )
+        const res = await api.get(`/users?username=${username}`)
         if (res.data.length > 0) {
           form.setError('username', {
             type: 'manual',
             message: 'Username already taken.',
           })
+          setIsUsernameAvailable(false)
         } else {
           if (form.formState.errors.username?.type === 'manual') {
             form.clearErrors('username')
           }
+          setIsUsernameAvailable(true)
         }
       } catch (error) {
         console.error('Error checking username', error)
+      } finally {
+        setIsCheckingUsername(false)
       }
     }, 500)
 
@@ -206,7 +225,32 @@ export function SignUpForm({
             <FormItem>
               <FormLabel>Username</FormLabel>
               <FormControl>
-                <Input placeholder='johndoe123' {...field} />
+                <div className='relative'>
+                  <Input
+                    placeholder='johndoe123'
+                    {...field}
+                    onChange={(e) => {
+                      const value = e.target.value.toLowerCase().replace(/\s/g, '')
+                      field.onChange(value)
+                    }}
+                    className={cn(
+                      (isCheckingUsername || isUsernameAvailable) && 'pr-10'
+                    )}
+                  />
+                  {isCheckingUsername && (
+                    <div className='absolute inset-y-0 right-0 flex items-center pr-3'>
+                      <Loader2 className='h-4 w-4 animate-spin text-muted-foreground' />
+                    </div>
+                  )}
+                  {!isCheckingUsername &&
+                    isUsernameAvailable &&
+                    !form.formState.errors.username &&
+                    username.length > 0 && (
+                      <div className='absolute inset-y-0 right-0 flex items-center pr-3'>
+                        <Check className='h-4 w-4 text-green-500' />
+                      </div>
+                    )}
+                </div>
               </FormControl>
               <FormMessage />
             </FormItem>

@@ -20,6 +20,8 @@ vi.mock('sonner', () => ({ toast: { promise: toastPromise } }))
 
 describe('SignUpForm', () => {
   let screen: RenderResult
+  let nameInput: Locator
+  let usernameInput: Locator
   let emailInput: Locator
   let passwordInput: Locator
   let confirmPasswordInput: Locator
@@ -29,6 +31,8 @@ describe('SignUpForm', () => {
     vi.clearAllMocks()
 
     screen = await render(<SignUpForm />)
+    nameInput = screen.getByRole('textbox', { name: /^Name$/i })
+    usernameInput = screen.getByRole('textbox', { name: /^Username$/i })
     emailInput = screen.getByRole('textbox', { name: /^Email$/i })
     passwordInput = screen.getByLabelText(/^Password$/i)
     confirmPasswordInput = screen.getByLabelText(/^Confirm Password$/i)
@@ -40,6 +44,8 @@ describe('SignUpForm', () => {
   })
 
   it('renders fields and submit button', async () => {
+    await expect.element(nameInput).toBeInTheDocument()
+    await expect.element(usernameInput).toBeInTheDocument()
     await expect.element(emailInput).toBeInTheDocument()
     await expect.element(passwordInput).toBeInTheDocument()
     await expect.element(confirmPasswordInput).toBeInTheDocument()
@@ -74,6 +80,8 @@ describe('SignUpForm', () => {
   it('disables submit while submitting and re-enables after timeout', async () => {
     vi.useFakeTimers()
 
+    await userEvent.fill(nameInput, 'John Doe')
+    await userEvent.fill(usernameInput, 'johndoe123')
     await userEvent.fill(emailInput, 'a@b.com')
     await userEvent.fill(passwordInput, '1234567')
     await userEvent.fill(confirmPasswordInput, '1234567')
