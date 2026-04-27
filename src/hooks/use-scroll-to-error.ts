@@ -1,5 +1,5 @@
 import { useEffect } from 'react'
-import { FieldErrors, FieldValues } from 'react-hook-form'
+import type { FieldErrors, FieldValues } from 'react-hook-form'
 
 /**
  * Hook to automatically scroll to the first form field with an error.

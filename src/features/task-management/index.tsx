@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { PlusIcon } from 'lucide-react'
+import { useSearch, useNavigate } from '@tanstack/react-router'
 
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
@@ -12,7 +13,19 @@ import { KanbanBoard } from './components/kanban-board'
 import { ProfileDropdown } from '@/components/profile-dropdown'
 
 export function TaskManagement() {
-    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+    const search = useSearch({ strict: false }) as { createTask?: boolean }
+    const navigate = useNavigate()
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(() => !!search.createTask)
+
+    useEffect(() => {
+        if (search.createTask) {
+            navigate({
+                to: '/task-management',
+                search: (prev) => ({ ...prev, createTask: undefined }),
+                replace: true,
+            })
+        }
+    }, [search.createTask, navigate])
 
     return (
         <>

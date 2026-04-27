@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react'
+import { memo, useState, useRef } from 'react'
 import { format } from 'date-fns'
 import { toast } from 'sonner'
 import {
@@ -17,8 +17,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import type { Task, TaskPriority } from '@/stores/task-store'
-import { STAGES, useTaskStore } from '@/stores/task-store'
+import { STAGES, useTaskStore, type Task, type TaskPriority } from '@/stores/task-store'
 import { CreateEditTaskDialog } from './create-edit-task-dialog'
 
 const priorityConfig: Record<TaskPriority, {
@@ -58,7 +57,12 @@ interface TaskCardProps {
   onDragOver?: (e: React.DragEvent, task: Task, position: 'before' | 'after') => void
 }
 
-export function TaskCard({ task, onDragStart, onDragEnd, onDragOver }: TaskCardProps) {
+export const TaskCard = memo(function TaskCard({
+  task,
+  onDragStart,
+  onDragEnd,
+  onDragOver,
+}: TaskCardProps) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isDragging, setIsDragging] = useState(false)
@@ -243,5 +247,4 @@ export function TaskCard({ task, onDragStart, onDragEnd, onDragOver }: TaskCardP
       />
     </>
   )
-}
-
+})

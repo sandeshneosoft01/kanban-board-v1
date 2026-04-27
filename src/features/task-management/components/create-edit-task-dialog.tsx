@@ -37,8 +37,7 @@ import {
 } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { toast } from 'sonner'
-import { useTaskStore } from '@/stores/task-store'
-import type { Task, TaskPriority } from '@/stores/task-store'
+import { useTaskStore, type Task, type TaskPriority } from '@/stores/task-store'
 
 const taskSchema = z.object({
   taskName: z.string().min(1, 'Task name is required'),

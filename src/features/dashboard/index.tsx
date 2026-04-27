@@ -34,7 +34,7 @@ export function Dashboard() {
       {/* ===== Main ===== */}
       <Main>
         <div className='flex items-end justify-end mb-4'>
-          <Link to="/task-management" className="">
+          <Link to="/task-management" search={{ createTask: true }}>
             <Button>
               <PlusIcon className="h-4 w-4" />
               Create Task

@@ -8,32 +8,30 @@ interface ScrollAreaProps extends React.ComponentProps<
   orientation?: 'vertical' | 'horizontal'
 }
 
-function ScrollArea({
-  className,
-  children,
-  orientation = 'vertical',
-  ...props
-}: ScrollAreaProps) {
-  return (
-    <ScrollAreaPrimitive.Root
-      data-slot='scroll-area'
-      className={cn('relative', className)}
-      {...props}
+const ScrollArea = React.forwardRef<
+  React.ElementRef<typeof ScrollAreaPrimitive.Root>,
+  ScrollAreaProps
+>(({ className, children, orientation = 'vertical', ...props }, ref) => (
+  <ScrollAreaPrimitive.Root
+    ref={ref}
+    data-slot='scroll-area'
+    className={cn('relative', className)}
+    {...props}
+  >
+    <ScrollAreaPrimitive.Viewport
+      data-slot='scroll-area-viewport'
+      className={cn(
+        'size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1',
+        orientation === 'horizontal' && 'overflow-x-auto!'
+      )}
     >
-      <ScrollAreaPrimitive.Viewport
-        data-slot='scroll-area-viewport'
-        className={cn(
-          'size-full rounded-[inherit] transition-[color,box-shadow] outline-none focus-visible:ring-[3px] focus-visible:ring-ring/50 focus-visible:outline-1',
-          orientation === 'horizontal' && 'overflow-x-auto!'
-        )}
-      >
-        {children}
-      </ScrollAreaPrimitive.Viewport>
-      <ScrollBar orientation={orientation} />
-      <ScrollAreaPrimitive.Corner />
-    </ScrollAreaPrimitive.Root>
-  )
-}
+      {children}
+    </ScrollAreaPrimitive.Viewport>
+    <ScrollBar orientation={orientation} />
+    <ScrollAreaPrimitive.Corner />
+  </ScrollAreaPrimitive.Root>
+))
+ScrollArea.displayName = ScrollAreaPrimitive.Root.displayName
 
 function ScrollBar({
   className,

@@ -3,12 +3,12 @@ import { Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ConfirmDialog } from '@/components/confirm-dialog'
-import type { Task, TaskStage } from '@/stores/task-store'
-import { STAGES, STAGE_LABELS, useTaskStore } from '@/stores/task-store'
+import { STAGES, STAGE_LABELS, useTaskStore, type Task, type TaskStage } from '@/stores/task-store'
 import { KanbanColumn } from './kanban-column'
 
 export function KanbanBoard() {
-  const { tasks, reorderTask, deleteTask } = useTaskStore()
+  const reorderTask = useTaskStore((state) => state.reorderTask)
+  const deleteTask = useTaskStore((state) => state.deleteTask)
 
   const [isDragging, setIsDragging] = useState(false)
   const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null)
@@ -18,10 +18,7 @@ export function KanbanBoard() {
 
   const draggedTaskRef = useRef<Task | null>(null)
 
-  const getTasksByStage = useCallback(
-    (stage: TaskStage) => tasks.filter((t) => t.stage === stage),
-    [tasks]
-  )
+
 
   const handleDragStart = useCallback((e: React.DragEvent, task: Task) => {
     draggedTaskRef.current = task
@@ -104,7 +101,6 @@ export function KanbanBoard() {
           <KanbanColumn
             key={stage}
             stage={stage}
-            tasks={getTasksByStage(stage)}
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
             onDrop={handleColumnDrop}

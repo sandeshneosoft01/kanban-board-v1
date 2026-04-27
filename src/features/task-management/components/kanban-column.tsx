@@ -1,4 +1,7 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useRef, useEffect, useMemo } from 'react'
+import { useVirtualizer } from '@tanstack/react-virtual'
+import { useShallow } from 'zustand/react/shallow'
+import { useTaskStore, STAGE_LABELS, type Task, type TaskStage } from '@/stores/task-store'
 import {
   Archive,
   ClipboardList,
@@ -7,8 +10,6 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import type { Task, TaskStage } from '@/stores/task-store'
-import { STAGE_LABELS } from '@/stores/task-store'
 import { TaskCard } from './task-card'
 
 const stageIcons: Record<TaskStage, React.ReactNode> = {
@@ -86,7 +87,6 @@ interface DropTarget {
 
 interface KanbanColumnProps {
   stage: TaskStage
-  tasks: Task[]
   onDragStart: (e: React.DragEvent, task: Task) => void
   onDragEnd: (e: React.DragEvent) => void
   onDrop: (e: React.DragEvent, stage: TaskStage, targetIndex: number) => void
@@ -95,7 +95,6 @@ interface KanbanColumnProps {
 
 export function KanbanColumn({
   stage,
-  tasks,
   onDragStart,
   onDragEnd,
   onDrop,
@@ -105,8 +104,36 @@ export function KanbanColumn({
   const [dropTarget, setDropTarget] = useState<DropTarget | null>(null)
   const colors = stageColors[stage]
 
+  const tasks = useTaskStore(
+    useShallow((state) => state.tasks.filter((t) => t.stage === stage))
+  )
+
+  const parentRef = useRef<HTMLDivElement>(null)
+  const [scrollElement, setScrollElement] = useState<HTMLDivElement | null>(null)
+
+  useEffect(() => {
+    if (parentRef.current) {
+      const viewport = parentRef.current.querySelector('[data-slot="scroll-area-viewport"]')
+      if (viewport instanceof HTMLDivElement) {
+        setScrollElement(viewport)
+      }
+    }
+  }, [])
+
   // Sort tasks by their order field
-  const sortedTasks = [...tasks].sort((a, b) => a.order - b.order)
+  const sortedTasks = useMemo(
+    () => [...tasks].sort((a, b) => a.order - b.order),
+    [tasks]
+  )
+
+  const estimateSize = useCallback(() => 140, [])
+
+  const virtualizer = useVirtualizer({
+    count: sortedTasks.length,
+    getScrollElement: () => scrollElement,
+    estimateSize,
+    overscan: 5,
+  })
 
   const handleDragOver = useCallback((e: React.DragEvent) => {
     e.preventDefault()
@@ -219,50 +246,68 @@ export function KanbanColumn({
       </div>
 
       {/* Task List */}
-      <ScrollArea className='flex-1 max-h-[calc(100vh-260px)]'>
-        <div className='p-2.5 flex flex-col gap-0'>
-          {sortedTasks.length === 0 ? (
-            <div className='flex flex-col items-center justify-center py-8 text-muted-foreground/60'>
-              <div className='p-3 rounded-full bg-muted/50 mb-2'>
-                {stageIcons[stage]}
-              </div>
-              <p className='text-xs font-medium'>No tasks</p>
-              <p className='text-[10px] mt-0.5'>Drag tasks here</p>
+      <ScrollArea ref={parentRef} className='flex-1 max-h-[calc(100vh-260px)] py-2.5'>
+        {sortedTasks.length === 0 ? (
+          <div className='flex flex-col items-center justify-center py-8 text-muted-foreground/60'>
+            <div className='p-3 rounded-full bg-muted/50 mb-2'>
+              {stageIcons[stage]}
             </div>
-          ) : (
-            sortedTasks.map((task, index) => (
-              <div key={task.id} className='flex flex-col'>
-                {/* Drop line BEFORE this card */}
-                <div className={cn(
-                  'transition-all duration-150 overflow-hidden',
-                  shouldShowLineBefore(task) ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0'
-                )}>
-                  <DropLine lineColor={colors.lineColor} />
+            <p className='text-xs font-medium'>No tasks</p>
+            <p className='text-[10px] mt-0.5'>Drag tasks here</p>
+          </div>
+        ) : (
+          <div
+            className='relative w-full'
+            style={{ height: `${virtualizer.getTotalSize()}px` }}
+          >
+            {virtualizer.getVirtualItems().map((virtualItem) => {
+              const task = sortedTasks[virtualItem.index]
+              const isFirst = virtualItem.index === 0
+
+              return (
+                <div
+                  key={virtualItem.key}
+                  data-index={virtualItem.index}
+                  ref={virtualizer.measureElement}
+                  className='absolute top-0 left-0 w-full px-2 flex flex-col gap-0'
+                  style={{
+                    transform: `translateY(${virtualItem.start}px)`,
+                  }}
+                >
+                  <div className='flex flex-col'>
+                    {/* Drop line BEFORE this card */}
+                    <div className={cn(
+                      'transition-all duration-150 overflow-hidden',
+                      shouldShowLineBefore(task) ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0'
+                    )}>
+                      <DropLine lineColor={colors.lineColor} />
+                    </div>
+
+                    {/* Gap between cards (unless the first or a line is shown) */}
+                    {!isFirst && !shouldShowLineBefore(task) && (
+                      <div className='h-2.5' />
+                    )}
+
+                    <TaskCard
+                      task={task}
+                      onDragStart={onDragStart}
+                      onDragEnd={handleDragEndLocal}
+                      onDragOver={handleCardDragOver}
+                    />
+
+                    {/* Drop line AFTER this card */}
+                    <div className={cn(
+                      'transition-all duration-150 overflow-hidden',
+                      shouldShowLineAfter(task) ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0'
+                    )}>
+                      <DropLine lineColor={colors.lineColor} />
+                    </div>
+                  </div>
                 </div>
-
-                {/* Gap between cards (unless the first or a line is shown) */}
-                {index > 0 && !shouldShowLineBefore(task) && (
-                  <div className='h-2.5' />
-                )}
-
-                <TaskCard
-                  task={task}
-                  onDragStart={onDragStart}
-                  onDragEnd={handleDragEndLocal}
-                  onDragOver={handleCardDragOver}
-                />
-
-                {/* Drop line AFTER this card */}
-                <div className={cn(
-                  'transition-all duration-150 overflow-hidden',
-                  shouldShowLineAfter(task) ? 'max-h-10 opacity-100' : 'max-h-0 opacity-0'
-                )}>
-                  <DropLine lineColor={colors.lineColor} />
-                </div>
-              </div>
-            ))
-          )}
-        </div>
+              )
+            })}
+          </div>
+        )}
       </ScrollArea>
     </div>
   )
