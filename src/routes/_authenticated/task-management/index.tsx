@@ -4,7 +4,7 @@ import { z } from 'zod'
 
 const taskManagementSearchSchema = z.object({
   createTask: z.boolean().optional(),
-  taskId: z.string().optional(),
+  taskId: z.coerce.string().optional(),
 })
 
 export const Route = createFileRoute('/_authenticated/task-management/')({
