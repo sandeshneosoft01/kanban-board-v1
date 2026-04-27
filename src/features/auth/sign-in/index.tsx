@@ -7,14 +7,18 @@ export function SignIn() {
 
   return (
     <AuthLayout>
-      <div className='flex flex-col space-y-2 text-center'>
-        <h1 className='text-2xl font-semibold tracking-tight'>Welcome Back</h1>
-        <p className='text-sm text-muted-foreground'>
-          Enter your email and password to access your account.
-        </p>
+      <div className='sticky top-0 z-20 -mx-4 bg-background/80 backdrop-blur-md px-4 py-6'>
+        <div className='flex flex-col space-y-2'>
+          <h1 className='text-2xl font-semibold tracking-tight'>Welcome Back</h1>
+          <p className='text-sm text-muted-foreground'>
+            Enter your email and password to access your account.
+          </p>
+        </div>
       </div>
-      <UserAuthForm redirectTo={redirect} />
-      <p className='mt-4 text-center text-sm text-muted-foreground'>
+      <div className='py-3'>
+        <UserAuthForm redirectTo={redirect} />
+      </div>
+      <div className='sticky bottom-0 z-20 -mx-4 bg-background/80 backdrop-blur-md px-4 py-8 text-center text-sm text-muted-foreground'>
         Don't Have An Account?{' '}
         <Link
           to='/sign-up'
@@ -22,7 +26,7 @@ export function SignIn() {
         >
           Register Now.
         </Link>
-      </p>
+      </div>
     </AuthLayout>
   )
 }

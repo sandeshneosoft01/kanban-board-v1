@@ -21,25 +21,31 @@ import { Separator } from '@/components/ui/separator'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
-const formSchema = z.object({
-  name: z.string().min(1, 'Please enter your name.'),
-  username: z.string().min(1, 'Please enter a username.'),
-  email: z.email({
-    error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
-  }),
-  contactNumber: z.string().optional(),
-  password: z
-    .string()
-    .min(1, 'Please enter your password.')
-    .min(7, 'Password must be at least 7 characters long.'),
-  profileImage: z
-    .any()
-    .optional()
-    .refine(
-      (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file?.type),
-      'Only .jpg, .jpeg and .png formats are supported.'
-    ),
-})
+const formSchema = z
+  .object({
+    name: z.string().min(1, 'Please enter your name.'),
+    username: z.string().min(1, 'Please enter a username.'),
+    email: z.email({
+      error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
+    }),
+    contactNumber: z.string().optional(),
+    password: z
+      .string()
+      .min(1, 'Please enter your password.')
+      .min(7, 'Password must be at least 7 characters long.'),
+    confirmPassword: z.string().min(1, 'Please confirm your password.'),
+    profileImage: z
+      .any()
+      .optional()
+      .refine(
+        (file) => !file || ACCEPTED_IMAGE_TYPES.includes(file?.type),
+        'Only .jpg, .jpeg and .png formats are supported.'
+      ),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords don't match.",
+    path: ['confirmPassword'],
+  })
 
 export function SignUpForm({
   className,
@@ -56,6 +62,7 @@ export function SignUpForm({
       email: '',
       contactNumber: '',
       password: '',
+      confirmPassword: '',
       profileImage: undefined,
     },
   })
@@ -138,6 +145,19 @@ export function SignUpForm({
           render={({ field }) => (
             <FormItem>
               <FormLabel>Password</FormLabel>
+              <FormControl>
+                <PasswordInput placeholder='********' {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <FormField
+          control={form.control}
+          name='confirmPassword'
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Confirm Password</FormLabel>
               <FormControl>
                 <PasswordInput placeholder='********' {...field} />
               </FormControl>
