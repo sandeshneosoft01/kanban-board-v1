@@ -8,10 +8,10 @@ type AuthLayoutProps = {
 export function AuthLayout({ children }: AuthLayoutProps) {
   return (
     <div className='grid min-h-svh lg:h-svh lg:grid-cols-2 lg:overflow-hidden'>
-      <div className='relative hidden flex-col bg-muted p-10 text-white lg:flex dark:border-r'>
+      <div className='relative hidden flex-col bg-muted p-10 text-primary-foreground lg:flex dark:border-r'>
         <div className='absolute inset-0 bg-primary' />
         <div className='relative z-20 flex items-center text-lg font-medium'>
-          <Logo className='mr-2 size-8 text-white' />
+          <Logo className='mr-2 size-8' />
           Kanban Board
         </div>
 
@@ -28,7 +28,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
 
           <div className='grid gap-6'>
             <div className='flex items-center gap-3'>
-              <div className='flex size-10 items-center justify-center rounded-lg bg-white/15'>
+              <div className='flex size-10 items-center justify-center rounded-lg bg-primary-foreground/15'>
                 <Layout className='size-5' />
               </div>
               <div>
@@ -40,7 +40,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             </div>
 
             <div className='flex items-center gap-3'>
-              <div className='flex size-10 items-center justify-center rounded-lg bg-white/15'>
+              <div className='flex size-10 items-center justify-center rounded-lg bg-primary-foreground/15'>
                 <CheckCircle2 className='size-5' />
               </div>
               <div>
@@ -52,7 +52,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             </div>
 
             <div className='flex items-center gap-3'>
-              <div className='flex size-10 items-center justify-center rounded-lg bg-white/15'>
+              <div className='flex size-10 items-center justify-center rounded-lg bg-primary-foreground/15'>
                 <Search className='size-5' />
               </div>
               <div>
@@ -64,7 +64,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             </div>
 
             <div className='flex items-center gap-3'>
-              <div className='flex size-10 items-center justify-center rounded-lg bg-white/15'>
+              <div className='flex size-10 items-center justify-center rounded-lg bg-primary-foreground/15'>
                 <Moon className='size-5' />
               </div>
               <div>
