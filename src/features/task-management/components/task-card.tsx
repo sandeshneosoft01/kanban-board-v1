@@ -203,6 +203,13 @@ export const TaskCard = memo(function TaskCard({
             {task.name}
           </h4>
 
+          {/* Task Description */}
+          {task.description && (
+            <p className='text-xs text-muted-foreground line-clamp-2 mb-3 overflow-hidden break-words'>
+              {task.description}
+            </p>
+          )}
+
           {/* Deadline */}
           <div className={cn(
             'flex items-center gap-1.5 text-xs',
