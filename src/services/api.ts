@@ -15,7 +15,7 @@ const pendingRequests: Record<string, ReturnType<typeof setTimeout>> = {}
 // ✅ REQUEST INTERCEPTOR
 api.interceptors.request.use(
     (config) => {
-        const token = useAuthStore.getState().auth.accessToken
+        const token = useAuthStore.getState().accessToken
         const requestId = config.url || Math.random().toString()
 
         ;(config as any)._requestId = requestId
@@ -49,7 +49,7 @@ api.interceptors.response.use(
         if (error.response?.status === 401) {
             console.warn('Unauthorized - Token expired or invalid')
             // Clear the auth state
-            useAuthStore.getState().auth.reset()
+            useAuthStore.getState().reset()
 
             // Redirect to sign-in page if not already there
             if (!window.location.pathname.startsWith('/sign-in')) {

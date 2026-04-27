@@ -1,16 +1,4 @@
 {
   "users": [],
-  "tasks": [
-    {
-      "name": "assa",
-      "priority": "Medium",
-      "deadline": "2026-04-28T18:30:00.000Z",
-      "description": "asas",
-      "stage": "done",
-      "userId": "0edecf3f-7476-416f-a2b7-4ebcb439ff10",
-      "order": 0,
-      "createdAt": "2026-04-27T11:49:03.668Z",
-      "id": 1
-    }
-  ]
+  "tasks": []
 }

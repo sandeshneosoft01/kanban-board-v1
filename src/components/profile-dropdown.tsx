@@ -15,8 +15,7 @@ import { useAuthStore } from '@/stores/auth-store'
 
 export function ProfileDropdown() {
   const [open, setOpen] = useDialogState()
-  const { auth } = useAuthStore()
-  const user = auth.user
+  const { user } = useAuthStore()
 
   const initials = user?.name
     ? user.name

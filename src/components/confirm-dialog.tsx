@@ -7,6 +7,7 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogAction,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
 
@@ -56,15 +57,17 @@ export function ConfirmDialog(props: ConfirmDialogProps) {
           <AlertDialogCancel disabled={isLoading}>
             {cancelBtnText ?? 'Cancel'}
           </AlertDialogCancel>
-          <Button
-            type={form ? 'submit' : 'button'}
-            form={form}
-            onClick={handleConfirm}
-            variant={destructive ? 'destructive' : 'default'}
-            disabled={disabled || isLoading}
-          >
-            {confirmText ?? 'Continue'}
-          </Button>
+          <AlertDialogAction asChild>
+            <Button
+              type={form ? 'submit' : 'button'}
+              form={form}
+              onClick={handleConfirm}
+              variant={destructive ? 'destructive' : 'default'}
+              disabled={disabled || isLoading}
+            >
+              {confirmText ?? 'Continue'}
+            </Button>
+          </AlertDialogAction>
         </AlertDialogFooter>
       </AlertDialogContent>
     </AlertDialog>

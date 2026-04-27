@@ -4,8 +4,8 @@ import { useAuthStore } from '@/stores/auth-store'
 
 export const Route = createFileRoute('/(auth)/sign-up')({
   beforeLoad: () => {
-    const { auth } = useAuthStore.getState()
-    if (auth.user && auth.accessToken) {
+    const { user, accessToken } = useAuthStore.getState()
+    if (user && accessToken) {
       throw redirect({ to: '/' })
     }
   },

@@ -67,7 +67,7 @@ export function SignUpForm({
   const [isCheckingUsername, setIsCheckingUsername] = useState(false)
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false)
   const navigate = useNavigate()
-  const { auth: authStore } = useAuthStore()
+  const { setUser, setAccessToken } = useAuthStore()
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -178,11 +178,11 @@ export function SignUpForm({
             exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
           }
 
-          authStore.setUser(mockUser)
+          setUser(mockUser)
           const mockToken = btoa(
             JSON.stringify({ id: user.id, email: user.email, exp: mockUser.exp })
           )
-          authStore.setAccessToken(mockToken)
+          setAccessToken(mockToken)
 
           // Navigate to home page
           navigate({ to: '/', replace: true })

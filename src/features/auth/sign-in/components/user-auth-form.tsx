@@ -47,7 +47,7 @@ export function UserAuthForm({
 }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const { auth: authStore } = useAuthStore()
+  const { setUser, setAccessToken } = useAuthStore()
   const recaptchaWrapperRef = useRef<HTMLDivElement>(null)
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null)
 
@@ -119,10 +119,10 @@ export function UserAuthForm({
           }
 
           // Set user and access token
-          authStore.setUser(mockUser, data.rememberMe)
+          setUser(mockUser, data.rememberMe)
           // Generate a mock JWT-like token (Base64 encoded string)
           const mockToken = btoa(JSON.stringify({ id: user.id, email: user.email, exp: mockUser.exp }))
-          authStore.setAccessToken(mockToken, data.rememberMe)
+          setAccessToken(mockToken, data.rememberMe)
 
           // Redirect to the stored location or default to dashboard
           const targetPath = redirectTo || '/'

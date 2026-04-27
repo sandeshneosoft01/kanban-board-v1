@@ -66,7 +66,7 @@ export const useTaskStore = create<TaskState>()(
       error: null,
 
       fetchTasks: async () => {
-        const user = useAuthStore.getState().auth.user
+        const user = useAuthStore.getState().user
         if (!user) return
 
         set({ isLoading: true, error: null })
@@ -83,7 +83,7 @@ export const useTaskStore = create<TaskState>()(
       },
 
       addTask: async (task) => {
-        const user = useAuthStore.getState().auth.user
+        const user = useAuthStore.getState().user
         if (!user) {
           toast.error('You must be logged in to add tasks')
           return
