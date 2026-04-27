@@ -5,7 +5,7 @@ import { ForgotPasswordForm } from './components/forgot-password-form'
 export function ForgotPassword() {
   return (
     <AuthLayout>
-      <div className='sticky top-0 z-20 -mx-4 bg-background/80 backdrop-blur-md px-4 py-6 text-center'>
+      <div className='sticky top-0 z-20 -mx-4 bg-background/80 backdrop-blur-md px-4 py-3'>
         <div className='flex flex-col space-y-2'>
           <h1 className='text-2xl font-semibold tracking-tight'>
             Forgot Password
@@ -16,7 +16,7 @@ export function ForgotPassword() {
           </p>
         </div>
       </div>
-      <div className='py-6'>
+      <div className='py-3'>
         <ForgotPasswordForm />
       </div>
       <div className='sticky bottom-0 z-20 -mx-4 bg-background/80 backdrop-blur-md px-4 py-8 text-center text-sm text-muted-foreground'>

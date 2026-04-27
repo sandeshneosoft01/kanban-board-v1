@@ -1,5 +1,7 @@
+import { useEffect, useRef } from 'react'
 import { useState } from 'react'
 import { z } from 'zod'
+import { Link } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useNavigate } from '@tanstack/react-router'
@@ -21,7 +23,8 @@ import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
-import { Link } from '@tanstack/react-router'
+import { RecaptchaVerifier } from 'firebase/auth'
+import { auth } from '@/lib/firebase'
 
 const formSchema = z.object({
   email: z.email({
@@ -44,7 +47,31 @@ export function UserAuthForm({
 }: UserAuthFormProps) {
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
-  const { auth } = useAuthStore()
+  const { auth: authStore } = useAuthStore()
+  const recaptchaWrapperRef = useRef<HTMLDivElement>(null)
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null)
+
+  useEffect(() => {
+    if (recaptchaWrapperRef.current && !recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaWrapperRef.current, {
+        size: 'normal',
+        callback: () => {
+          // reCAPTCHA solved
+        },
+        'expired-callback': () => {
+          // Response expired.
+        },
+      })
+      recaptchaVerifierRef.current.render()
+    }
+
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear()
+        recaptchaVerifierRef.current = null
+      }
+    }
+  }, [])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -73,8 +100,8 @@ export function UserAuthForm({
         }
 
         // Set user and access token
-        auth.setUser(mockUser)
-        auth.setAccessToken('mock-access-token')
+        authStore.setUser(mockUser)
+        authStore.setAccessToken('mock-access-token')
 
         // Redirect to the stored location or default to dashboard
         const targetPath = redirectTo || '/'
@@ -136,6 +163,11 @@ export function UserAuthForm({
             Forgot Your Password?
           </Link>
         </div>
+
+        <div className='flex justify-center py-2'>
+          <div id='recaptcha-container' ref={recaptchaWrapperRef} />
+        </div>
+
         <Button className='mt-2' disabled={isLoading}>
           {isLoading ? (
             <Loader2 className='animate-spin' />

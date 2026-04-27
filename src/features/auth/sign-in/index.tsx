@@ -7,7 +7,7 @@ export function SignIn() {
 
   return (
     <AuthLayout>
-      <div className='sticky top-0 z-20 -mx-4 bg-background/80 backdrop-blur-md px-4 py-6'>
+      <div className='sticky top-0 z-20 -mx-4 bg-background/80 backdrop-blur-md px-4 py-3'>
         <div className='flex flex-col space-y-2'>
           <h1 className='text-2xl font-semibold tracking-tight'>Welcome Back</h1>
           <p className='text-sm text-muted-foreground'>

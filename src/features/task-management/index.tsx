@@ -1,13 +1,18 @@
+import { useState } from 'react'
+import { PlusIcon } from 'lucide-react'
+
 import { Header } from '@/components/layout/header'
 import { Main } from '@/components/layout/main'
-import { ProfileDropdown } from '@/components/profile-dropdown'
 import { Search } from '@/components/search'
 import { ThemeSwitch } from '@/components/theme-switch'
-import { PlusIcon } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Link } from '@tanstack/react-router'
+
+import { CreateTaskDialog } from './components/create-task-dialog'
+import { ProfileDropdown } from '@/components/profile-dropdown'
 
 export function TaskManagement() {
+    const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false)
+
     return (
         <>
             {/* ===== Top Heading ===== */}
@@ -24,13 +29,16 @@ export function TaskManagement() {
             {/* ===== Main ===== */}
             <Main>
                 <div className='flex items-end justify-end mb-4'>
-                    <Link to="/task-management" className="">
-                        <Button>
-                            <PlusIcon className="h-4 w-4" />
-                            Create Task
-                        </Button>
-                    </Link>
+                    <Button onClick={() => setIsCreateDialogOpen(true)}>
+                        <PlusIcon className="h-4 w-4" />
+                        Create Task
+                    </Button>
                 </div>
+
+                <CreateTaskDialog
+                    open={isCreateDialogOpen}
+                    onOpenChange={setIsCreateDialogOpen}
+                />
             </Main>
         </>
     )
