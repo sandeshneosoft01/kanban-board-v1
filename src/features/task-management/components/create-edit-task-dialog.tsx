@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { z } from 'zod'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -37,8 +37,10 @@ import {
 } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { toast } from 'sonner'
+import { useTaskStore } from '@/stores/task-store'
+import type { Task, TaskPriority } from '@/stores/task-store'
 
-const createTaskSchema = z.object({
+const taskSchema = z.object({
   taskName: z.string().min(1, 'Task name is required'),
   priority: z.string().min(1, 'Priority is required'),
   deadline: z.date({
@@ -47,31 +49,70 @@ const createTaskSchema = z.object({
   description: z.string().optional(),
 })
 
-type CreateTaskValues = z.infer<typeof createTaskSchema>
+type TaskFormValues = z.infer<typeof taskSchema>
 
-interface CreateTaskDialogProps {
+interface CreateEditTaskDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
+  task?: Task
 }
 
-export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) {
+export function CreateEditTaskDialog({
+  open,
+  onOpenChange,
+  task,
+}: CreateEditTaskDialogProps) {
+  const isEdit = !!task
   const [isLoading, setIsLoading] = useState(false)
 
-  const form = useForm<CreateTaskValues>({
-    resolver: zodResolver(createTaskSchema),
+  const addTask = useTaskStore((state) => state.addTask)
+  const updateTask = useTaskStore((state) => state.updateTask)
+
+  const form = useForm<TaskFormValues>({
+    resolver: zodResolver(taskSchema),
     defaultValues: {
-      taskName: '',
-      priority: 'Medium',
-      description: '',
+      taskName: task?.name ?? '',
+      priority: task?.priority ?? 'Medium',
+      deadline: task ? new Date(task.deadline) : undefined,
+      description: task?.description ?? '',
     },
   })
 
-  const onSubmit = async (values: CreateTaskValues) => {
+  useEffect(() => {
+    if (open) {
+      form.reset({
+        taskName: task?.name ?? '',
+        priority: task?.priority ?? 'Medium',
+        deadline: task ? new Date(task.deadline) : undefined,
+        description: task?.description ?? '',
+      })
+    }
+  }, [open, task, form])
+
+  const onSubmit = async (values: TaskFormValues) => {
     setIsLoading(true)
     // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500))
-    console.log('Task Created:', values)
-    toast.success('Task created successfully!')
+    await new Promise((resolve) => setTimeout(resolve, isEdit ? 500 : 1500))
+
+    if (isEdit && task) {
+      updateTask(task.id, {
+        name: values.taskName,
+        priority: values.priority as TaskPriority,
+        deadline: values.deadline,
+        description: values.description,
+      })
+      toast.success('Task updated successfully!')
+    } else {
+      addTask({
+        name: values.taskName,
+        priority: values.priority as TaskPriority,
+        deadline: values.deadline,
+        description: values.description,
+        stage: 'backlog',
+      })
+      toast.success('Task created successfully!')
+    }
+
     setIsLoading(false)
     form.reset()
     onOpenChange(false)
@@ -82,11 +123,13 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
       <DialogContent className='p-0 gap-0 overflow-hidden max-h-[95vh] sm:max-h-[90vh] flex flex-col sm:max-w-lg md:max-w-xl'>
         <DialogHeader className='p-6 relative shrink-0'>
           <div className='space-y-1 sm:space-y-1.5 text-left'>
-            <DialogTitle className='font-bold tracking-tight text-[#111827]'>
-              Create New Task
+            <DialogTitle className='font-bold tracking-tight'>
+              {isEdit ? 'Edit Task' : 'Create New Task'}
             </DialogTitle>
             <DialogDescription>
-              Add details to assign this task to your workspace.
+              {isEdit
+                ? 'Update the task details below.'
+                : 'Add details to assign this task to your workspace.'}
             </DialogDescription>
           </div>
         </DialogHeader>
@@ -131,6 +174,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                       <Select
                         onValueChange={field.onChange}
                         defaultValue={field.value}
+                        key={field.value}
                       >
                         <FormControl>
                           <SelectTrigger className='w-full'>
@@ -174,7 +218,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                             mode='single'
                             selected={field.value}
                             onSelect={field.onChange}
-                            disabled={(date) =>
+                            disabled={isEdit ? undefined : (date) =>
                               date < new Date(new Date().setHours(0, 0, 0, 0))
                             }
                             initialFocus
@@ -188,6 +232,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 />
               </div>
 
+              {/* Description field — only shown in create mode */}
               <FormField
                 control={form.control}
                 name='description'
@@ -209,7 +254,7 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
               />
             </div>
 
-            <div className='shrink-0 flex flex-col-reverse sm:flex-row items-center justify-end sm:gap-4 p-4 bg-[#f9fafb] border-t border-[#f3f4f6]'>
+            <div className='shrink-0 flex flex-col-reverse sm:flex-row items-center justify-end sm:gap-4 p-4 bg-muted/50 border-t'>
               <Button
                 type='button'
                 variant='ghost'
@@ -224,10 +269,10 @@ export function CreateTaskDialog({ open, onOpenChange }: CreateTaskDialogProps) 
                 {isLoading ? (
                   <>
                     <Loader2 className='mr-2 h-5 w-5 animate-spin' />
-                    Creating...
+                    {isEdit ? 'Saving...' : 'Creating...'}
                   </>
                 ) : (
-                  'Create Task'
+                  isEdit ? 'Save Changes' : 'Create Task'
                 )}
               </Button>
             </div>
