@@ -1,6 +1,5 @@
 import { memo, useState, useRef } from 'react'
 import { format } from 'date-fns'
-import { toast } from 'sonner'
 import {
   ChevronLeft,
   ChevronRight,
