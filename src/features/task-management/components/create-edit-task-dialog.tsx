@@ -36,15 +36,14 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
-import { toast } from 'sonner'
 import { useTaskStore, type Task, type TaskPriority } from '@/stores/task-store'
 
 const taskSchema = z.object({
   taskName: z.string().min(1, 'Task name is required'),
   priority: z.string().min(1, 'Priority is required'),
-  deadline: z.date({
-    error: (iss) => (iss.received === 'undefined' ? 'Deadline is required' : 'Invalid date'),
-  }),
+  deadline: z
+    .any()
+    .refine((val) => val instanceof Date, 'Please select a deadline'),
   description: z.string().optional(),
 })
 
@@ -63,6 +62,7 @@ export function CreateEditTaskDialog({
 }: CreateEditTaskDialogProps) {
   const isEdit = !!task
   const [isLoading, setIsLoading] = useState(false)
+  const [isCalendarOpen, setIsCalendarOpen] = useState(false)
 
   const addTask = useTaskStore((state) => state.addTask)
   const updateTask = useTaskStore((state) => state.updateTask)
@@ -199,7 +199,7 @@ export function CreateEditTaskDialog({
                       <FormLabel className='text-xs sm:text-[13px] font-bold uppercase tracking-wider text-[#374151] ml-0.5'>
                         Deadline
                       </FormLabel>
-                      <Popover>
+                      <Popover open={isCalendarOpen} onOpenChange={setIsCalendarOpen}>
                         <PopoverTrigger asChild>
                           <FormControl>
                             <Button
@@ -216,7 +216,10 @@ export function CreateEditTaskDialog({
                           <Calendar
                             mode='single'
                             selected={field.value}
-                            onSelect={field.onChange}
+                            onSelect={(date) => {
+                              field.onChange(date)
+                              setIsCalendarOpen(false)
+                            }}
                             disabled={isEdit ? undefined : (date) =>
                               date < new Date(new Date().setHours(0, 0, 0, 0))
                             }
