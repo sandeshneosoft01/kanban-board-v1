@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { z } from 'zod'
 import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
@@ -22,6 +22,9 @@ import {
 import { Input } from '@/components/ui/input'
 import { PasswordInput } from '@/components/password-input'
 import { Separator } from '@/components/ui/separator'
+import { RecaptchaVerifier } from 'firebase/auth'
+import { auth, googleProvider, appleProvider } from '@/lib/firebase'
+import { useSocialAuth } from '@/hooks/use-social-auth'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
@@ -68,6 +71,35 @@ export function SignUpForm({
   const [isUsernameAvailable, setIsUsernameAvailable] = useState(false)
   const navigate = useNavigate()
   const { setUser, setAccessToken } = useAuthStore()
+  const { handleSocialLogin, isSocialLoading } = useSocialAuth()
+  const [isRecaptchaVerified, setIsRecaptchaVerified] = useState(false)
+  const recaptchaWrapperRef = useRef<HTMLDivElement>(null)
+  const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null)
+
+  useEffect(() => {
+    if (recaptchaWrapperRef.current && !recaptchaVerifierRef.current) {
+      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaWrapperRef.current, {
+        size: 'normal',
+        callback: () => {
+          setIsRecaptchaVerified(true)
+        },
+        'expired-callback': () => {
+          setIsRecaptchaVerified(false)
+        },
+      })
+      recaptchaVerifierRef.current.render()
+    }
+
+    return () => {
+      if (recaptchaVerifierRef.current) {
+        recaptchaVerifierRef.current.clear()
+        recaptchaVerifierRef.current = null
+      }
+      if (recaptchaWrapperRef.current) {
+        recaptchaWrapperRef.current.innerHTML = ''
+      }
+    }
+  }, [])
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -128,6 +160,11 @@ export function SignUpForm({
   useScrollToError(form.formState.errors)
 
   function onSubmit(data: z.infer<typeof formSchema>) {
+    if (!isRecaptchaVerified) {
+      toast.error('Please complete the reCAPTCHA verification.')
+      return
+    }
+
     setIsLoading(true)
 
     toast.promise(
@@ -360,7 +397,12 @@ export function SignUpForm({
             </FormItem>
           )}
         />
-        <Button className='mt-2' disabled={isLoading}>
+
+        <div className='flex justify-center py-2'>
+          <div id='recaptcha-container-signup' ref={recaptchaWrapperRef} />
+        </div>
+
+        <Button className='mt-2' disabled={isLoading || !isRecaptchaVerified}>
           {isLoading ? (
             <Loader2 className='animate-spin' />
           ) : (
@@ -381,7 +423,12 @@ export function SignUpForm({
         </div>
 
         <div className='grid grid-cols-2 gap-4'>
-          <Button variant='outline' type='button' disabled={isLoading}>
+          <Button
+            variant='outline'
+            type='button'
+            disabled={isLoading || isSocialLoading}
+            onClick={() => handleSocialLogin(googleProvider)}
+          >
             <svg
               className='mr-2 size-4 text-red-500'
               aria-hidden='true'
@@ -399,7 +446,12 @@ export function SignUpForm({
             </svg>
             Google
           </Button>
-          <Button variant='outline' type='button' disabled={isLoading}>
+          <Button
+            variant='outline'
+            type='button'
+            disabled={isLoading || isSocialLoading}
+            onClick={() => handleSocialLogin(appleProvider)}
+          >
             <svg
               className='mr-2 size-4'
               aria-hidden='true'

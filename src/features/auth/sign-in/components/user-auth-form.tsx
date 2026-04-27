@@ -23,7 +23,8 @@ import { PasswordInput } from '@/components/password-input'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
 import { RecaptchaVerifier } from 'firebase/auth'
-import { auth } from '@/lib/firebase'
+import { auth, googleProvider, appleProvider } from '@/lib/firebase'
+import { useSocialAuth } from '@/hooks/use-social-auth'
 
 const formSchema = z.object({
   email: z.email({
@@ -48,6 +49,8 @@ export function UserAuthForm({
   const [isLoading, setIsLoading] = useState(false)
   const navigate = useNavigate()
   const { setUser, setAccessToken } = useAuthStore()
+  const { handleSocialLogin, isSocialLoading } = useSocialAuth()
+  const [isRecaptchaVerified, setIsRecaptchaVerified] = useState(false)
   const recaptchaWrapperRef = useRef<HTMLDivElement>(null)
   const recaptchaVerifierRef = useRef<RecaptchaVerifier | null>(null)
 
@@ -57,9 +60,11 @@ export function UserAuthForm({
         size: 'normal',
         callback: () => {
           // reCAPTCHA solved
+          setIsRecaptchaVerified(true)
         },
         'expired-callback': () => {
           // Response expired.
+          setIsRecaptchaVerified(false)
         },
       })
       recaptchaVerifierRef.current.render()
@@ -69,6 +74,9 @@ export function UserAuthForm({
       if (recaptchaVerifierRef.current) {
         recaptchaVerifierRef.current.clear()
         recaptchaVerifierRef.current = null
+      }
+      if (recaptchaWrapperRef.current) {
+        recaptchaWrapperRef.current.innerHTML = ''
       }
     }
   }, [])
@@ -85,6 +93,11 @@ export function UserAuthForm({
   useScrollToError(form.formState.errors)
 
   function onSubmit(data: z.infer<typeof formSchema>) {
+    if (!isRecaptchaVerified) {
+      toast.error('Please complete the reCAPTCHA verification.')
+      return
+    }
+
     setIsLoading(true)
 
     toast.promise(
@@ -205,7 +218,7 @@ export function UserAuthForm({
           <div id='recaptcha-container' ref={recaptchaWrapperRef} />
         </div>
 
-        <Button className='mt-2' disabled={isLoading}>
+        <Button className='mt-2' disabled={isLoading || !isRecaptchaVerified}>
           {isLoading ? (
             <Loader2 className='animate-spin' />
           ) : (
@@ -226,7 +239,12 @@ export function UserAuthForm({
         </div>
 
         <div className='grid grid-cols-2 gap-4'>
-          <Button variant='outline' type='button' disabled={isLoading}>
+          <Button
+            variant='outline'
+            type='button'
+            disabled={isLoading || isSocialLoading}
+            onClick={() => handleSocialLogin(googleProvider)}
+          >
             <svg
               className='mr-2 size-4 text-red-500'
               aria-hidden='true'
@@ -244,7 +262,12 @@ export function UserAuthForm({
             </svg>
             Google
           </Button>
-          <Button variant='outline' type='button' disabled={isLoading}>
+          <Button
+            variant='outline'
+            type='button'
+            disabled={isLoading || isSocialLoading}
+            onClick={() => handleSocialLogin(appleProvider)}
+          >
             <svg
               className='mr-2 size-4'
               aria-hidden='true'
