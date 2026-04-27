@@ -18,14 +18,7 @@ api.interceptors.request.use(
         const token = useAuthStore.getState().auth.accessToken
         const requestId = config.url || Math.random().toString()
 
-            // Show a warning toast if the server is taking too long (useful for json-server or slow networks)
-            // pendingRequests[requestId] = setTimeout(() => {
-            //     toast.warning(
-            //         'Server is taking a while to respond. Please wait a moment.'
-            //     )
-            // }, 5000)
-
-            ; (config as any)._requestId = requestId
+        ;(config as any)._requestId = requestId
 
         if (token) {
             config.headers.Authorization = `Bearer ${token}`

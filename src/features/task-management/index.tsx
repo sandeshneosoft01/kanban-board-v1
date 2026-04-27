@@ -27,7 +27,7 @@ export function TaskManagement() {
     useEffect(() => {
         if (search.createTask) {
             navigate({
-                to: '/task-management',
+                to: '.',
                 search: (prev) => ({ ...prev, createTask: undefined }),
                 replace: true,
             })
