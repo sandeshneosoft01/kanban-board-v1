@@ -1,7 +1,8 @@
 import { create } from 'zustand'
 import { getCookie, setCookie, removeCookie } from '@/lib/cookies'
 
-const ACCESS_TOKEN = 'thisisjustarandomstring'
+const ACCESS_TOKEN = 'kanban-access-token'
+const AUTH_USER = 'kanban-auth-user'
 
 interface AuthUser {
   accountNo: string
@@ -16,26 +17,51 @@ interface AuthUser {
 interface AuthState {
   auth: {
     user: AuthUser | null
-    setUser: (user: AuthUser | null) => void
+    setUser: (user: AuthUser | null, rememberMe?: boolean) => void
     accessToken: string
-    setAccessToken: (accessToken: string) => void
+    setAccessToken: (accessToken: string, rememberMe?: boolean) => void
     resetAccessToken: () => void
     reset: () => void
   }
 }
 
 export const useAuthStore = create<AuthState>()((set) => {
-  const cookieState = getCookie(ACCESS_TOKEN)
-  const initToken = cookieState ? JSON.parse(cookieState) : ''
+  const getInitialToken = () => {
+    try {
+      const cookieState = getCookie(ACCESS_TOKEN)
+      return cookieState ? JSON.parse(cookieState) : ''
+    } catch {
+      return ''
+    }
+  }
+
+  const getInitialUser = () => {
+    try {
+      const cookieState = getCookie(AUTH_USER)
+      return cookieState ? JSON.parse(cookieState) : null
+    } catch {
+      return null
+    }
+  }
+
   return {
     auth: {
-      user: null,
-      setUser: (user) =>
-        set((state) => ({ ...state, auth: { ...state.auth, user } })),
-      accessToken: initToken,
-      setAccessToken: (accessToken) =>
+      user: getInitialUser(),
+      setUser: (user, rememberMe) =>
         set((state) => {
-          setCookie(ACCESS_TOKEN, JSON.stringify(accessToken))
+          if (user) {
+            const maxAge = rememberMe ? 60 * 60 * 24 * 30 : undefined // 30 days if remembered, else session
+            setCookie(AUTH_USER, JSON.stringify(user), maxAge)
+          } else {
+            removeCookie(AUTH_USER)
+          }
+          return { ...state, auth: { ...state.auth, user } }
+        }),
+      accessToken: getInitialToken(),
+      setAccessToken: (accessToken, rememberMe) =>
+        set((state) => {
+          const maxAge = rememberMe ? 60 * 60 * 24 * 30 : undefined // 30 days if remembered, else session
+          setCookie(ACCESS_TOKEN, JSON.stringify(accessToken), maxAge)
           return { ...state, auth: { ...state.auth, accessToken } }
         }),
       resetAccessToken: () =>
@@ -46,6 +72,7 @@ export const useAuthStore = create<AuthState>()((set) => {
       reset: () =>
         set((state) => {
           removeCookie(ACCESS_TOKEN)
+          removeCookie(AUTH_USER)
           return {
             ...state,
             auth: { ...state.auth, user: null, accessToken: '' },

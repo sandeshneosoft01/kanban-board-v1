@@ -7,7 +7,7 @@ import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { cn } from '@/lib/utils'
-import api from '@/lib/api'
+import api from '@/services/api'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import {
@@ -33,6 +33,7 @@ const formSchema = z.object({
     .string()
     .min(1, 'Please enter your password.')
     .min(7, 'Password must be at least 7 characters long.'),
+  rememberMe: z.boolean().default(false).optional(),
 })
 
 interface UserAuthFormProps extends React.HTMLAttributes<HTMLFormElement> {
@@ -77,6 +78,7 @@ export function UserAuthForm({
     defaultValues: {
       email: '',
       password: '',
+      rememberMe: false,
     },
   })
 
@@ -118,10 +120,10 @@ export function UserAuthForm({
           }
 
           // Set user and access token
-          authStore.setUser(mockUser)
+          authStore.setUser(mockUser, data.rememberMe)
           // Generate a mock JWT-like token (Base64 encoded string)
           const mockToken = btoa(JSON.stringify({ id: user.id, email: user.email, exp: mockUser.exp }))
-          authStore.setAccessToken(mockToken)
+          authStore.setAccessToken(mockToken, data.rememberMe)
 
           // Redirect to the stored location or default to dashboard
           const targetPath = redirectTo || '/'
@@ -170,23 +172,35 @@ export function UserAuthForm({
             </FormItem>
           )}
         />
-        <div className='flex items-center justify-between'>
-          <div className='flex items-center space-x-2'>
-            <Checkbox id='remember' />
-            <label
-              htmlFor='remember'
-              className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
-            >
-              Remember Me
-            </label>
-          </div>
-          <Link
-            to='/forgot-password'
-            className='text-sm font-medium text-primary hover:underline'
-          >
-            Forgot Your Password?
-          </Link>
-        </div>
+        <FormField
+          control={form.control}
+          name='rememberMe'
+          render={({ field }) => (
+            <div className='flex items-center justify-between'>
+              <div className='flex items-center space-x-2'>
+                <FormControl>
+                  <Checkbox
+                    id='rememberMe'
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <label
+                  htmlFor='rememberMe'
+                  className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                >
+                  Remember Me
+                </label>
+              </div>
+              <Link
+                to='/forgot-password'
+                className='text-sm font-medium text-primary hover:underline'
+              >
+                Forgot Your Password?
+              </Link>
+            </div>
+          )}
+        />
 
         <div className='flex justify-center py-2'>
           <div id='recaptcha-container' ref={recaptchaWrapperRef} />
