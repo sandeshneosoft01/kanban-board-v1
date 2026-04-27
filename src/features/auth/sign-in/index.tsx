@@ -1,11 +1,4 @@
 import { Link, useSearch } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { AuthLayout } from '../auth-layout'
 import { UserAuthForm } from './components/user-auth-form'
 
@@ -14,25 +7,22 @@ export function SignIn() {
 
   return (
     <AuthLayout>
-      <Card className='max-w-sm gap-4'>
-        <CardHeader>
-          <CardTitle className='text-lg tracking-tight'>Sign in</CardTitle>
-          <CardDescription>
-            Enter your email and password below to log into{' '}
-            <br className='max-sm:hidden' /> your account. Don't have an
-            account?{' '}
-            <Link
-              to='/sign-up'
-              className='text-nowrap underline underline-offset-4 hover:text-primary'
-            >
-              Sign Up
-            </Link>
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <UserAuthForm redirectTo={redirect} />
-        </CardContent>
-      </Card>
+      <div className='flex flex-col space-y-2 text-center'>
+        <h1 className='text-2xl font-semibold tracking-tight'>Welcome Back</h1>
+        <p className='text-sm text-muted-foreground'>
+          Enter your email and password to access your account.
+        </p>
+      </div>
+      <UserAuthForm redirectTo={redirect} />
+      <p className='mt-4 text-center text-sm text-muted-foreground'>
+        Don't Have An Account?{' '}
+        <Link
+          to='/sign-up'
+          className='font-medium text-primary underline-offset-4 hover:underline'
+        >
+          Register Now.
+        </Link>
+      </p>
     </AuthLayout>
   )
 }

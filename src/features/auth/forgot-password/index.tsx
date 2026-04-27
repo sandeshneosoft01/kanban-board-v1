@@ -1,44 +1,29 @@
 import { Link } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { AuthLayout } from '../auth-layout'
 import { ForgotPasswordForm } from './components/forgot-password-form'
 
 export function ForgotPassword() {
   return (
     <AuthLayout>
-      <Card className='max-w-sm gap-4 sm:min-w-sm'>
-        <CardHeader>
-          <CardTitle className='text-lg tracking-tight'>
-            Forgot Password
-          </CardTitle>
-          <CardDescription>
-            Enter your registered email and <br /> we will send you a link to
-            reset your password.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <ForgotPasswordForm />
-        </CardContent>
-        <CardFooter>
-          <p className='mx-auto px-8 text-center text-sm text-balance text-muted-foreground'>
-            Don't have an account?{' '}
-            <Link
-              to='/sign-up'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Sign up
-            </Link>
-            .
-          </p>
-        </CardFooter>
-      </Card>
+      <div className='flex flex-col space-y-2 text-center'>
+        <h1 className='text-2xl font-semibold tracking-tight'>
+          Forgot Password
+        </h1>
+        <p className='text-sm text-muted-foreground text-balance'>
+          Enter your registered email and we will send you a link to reset your
+          password.
+        </p>
+      </div>
+      <ForgotPasswordForm />
+      <p className='mt-4 text-center text-sm text-muted-foreground'>
+        Don't have an account?{' '}
+        <Link
+          to='/sign-up'
+          className='font-medium text-primary underline-offset-4 hover:underline'
+        >
+          Sign up
+        </Link>
+      </p>
     </AuthLayout>
   )
 }

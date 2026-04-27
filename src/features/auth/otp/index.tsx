@@ -1,44 +1,29 @@
 import { Link } from '@tanstack/react-router'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { AuthLayout } from '../auth-layout'
 import { OtpForm } from './components/otp-form'
 
 export function Otp() {
   return (
     <AuthLayout>
-      <Card className='max-w-md gap-4'>
-        <CardHeader>
-          <CardTitle className='text-base tracking-tight'>
-            Two-factor Authentication
-          </CardTitle>
-          <CardDescription>
-            Please enter the authentication code. <br /> We have sent the
-            authentication code to your email.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <OtpForm />
-        </CardContent>
-        <CardFooter>
-          <p className='px-8 text-center text-sm text-muted-foreground'>
-            Haven't received it?{' '}
-            <Link
-              to='/sign-in'
-              className='underline underline-offset-4 hover:text-primary'
-            >
-              Resend a new code.
-            </Link>
-            .
-          </p>
-        </CardFooter>
-      </Card>
+      <div className='flex flex-col space-y-2 text-center'>
+        <h1 className='text-2xl font-semibold tracking-tight'>
+          Two-factor Authentication
+        </h1>
+        <p className='text-sm text-muted-foreground text-balance'>
+          Please enter the authentication code. <br /> We have sent the
+          authentication code to your email.
+        </p>
+      </div>
+      <OtpForm />
+      <p className='mt-4 text-center text-sm text-muted-foreground'>
+        Haven't received it?{' '}
+        <Link
+          to='/sign-in'
+          className='font-medium text-primary underline-offset-4 hover:underline'
+        >
+          Resend a new code.
+        </Link>
+      </p>
     </AuthLayout>
   )
 }
