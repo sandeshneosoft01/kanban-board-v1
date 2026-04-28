@@ -6,6 +6,7 @@ import { useNavigate } from '@tanstack/react-router'
 import { ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { sleep, cn } from '@/lib/utils'
+import { sanitize } from '@/lib/sanitize'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { Button } from '@/components/ui/button'
 import {
@@ -19,9 +20,13 @@ import {
 import { Input } from '@/components/ui/input'
 
 const formSchema = z.object({
-  email: z.email({
-    error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
-  }),
+  email: z
+    .string()
+    .trim()
+    .email({
+      error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
+    })
+    .transform((val) => sanitize(val)),
 })
 
 export function ForgotPasswordForm({

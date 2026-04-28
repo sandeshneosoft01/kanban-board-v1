@@ -3,6 +3,7 @@ import { persist } from 'zustand/middleware'
 import api from '@/services/api'
 import { toast } from 'sonner'
 import { useAuthStore } from './auth-store'
+import { logger } from '@/lib/logger'
 
 export type TaskPriority = 'Low' | 'Medium' | 'High'
 
@@ -76,7 +77,7 @@ export const useTaskStore = create<TaskState>()(
           const sortedTasks = response.data.sort((a, b) => a.order - b.order)
           set({ tasks: sortedTasks, isLoading: false })
         } catch (error) {
-          console.error('Failed to fetch tasks:', error)
+          logger.error('Failed to fetch tasks:', error)
           set({ error: 'Failed to fetch tasks', isLoading: false })
           toast.error('Failed to load tasks')
         }
@@ -107,7 +108,7 @@ export const useTaskStore = create<TaskState>()(
           set({ tasks: [...tasks, response.data], isLoading: false })
           toast.success('Task created successfully')
         } catch (error) {
-          console.error('Failed to add task:', error)
+          logger.error('Failed to add task:', error)
           set({ isLoading: false })
           toast.error('Failed to create task')
         }
@@ -127,7 +128,7 @@ export const useTaskStore = create<TaskState>()(
           })
           toast.success('Task updated')
         } catch (error) {
-          console.error('Failed to update task:', error)
+          logger.error('Failed to update task:', error)
           toast.error('Failed to update task')
         }
       },
@@ -146,7 +147,7 @@ export const useTaskStore = create<TaskState>()(
           set({ tasks: [...newTasks] })
           toast.success('Task deleted')
         } catch (error) {
-          console.error('Failed to delete task:', error)
+          logger.error('Failed to delete task:', error)
           toast.error('Failed to delete task')
         }
       },
@@ -171,7 +172,7 @@ export const useTaskStore = create<TaskState>()(
 
           set({ tasks: [...newTasks] })
         } catch (error) {
-          console.error('Failed to move task:', error)
+          logger.error('Failed to move task:', error)
           toast.error('Failed to move task')
         }
       },
@@ -244,7 +245,7 @@ export const useTaskStore = create<TaskState>()(
             updates.map((u) => api.patch(`/tasks/${u.id}`, { order: u.order, stage: u.stage }))
           )
         } catch (error) {
-          console.error('Failed to reorder task:', error)
+          logger.error('Failed to reorder task:', error)
           toast.error('Failed to reorder task')
           get().fetchTasks()
         }

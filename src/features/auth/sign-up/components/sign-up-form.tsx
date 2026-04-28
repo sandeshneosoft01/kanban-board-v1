@@ -10,8 +10,11 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { auth, googleProvider, appleProvider } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
+import { sanitize } from '@/lib/sanitize'
+import { logger } from '@/lib/logger'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { useSocialAuth } from '@/hooks/use-social-auth'
+import { PasswordInput } from '@/components/password-input'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
@@ -24,26 +27,38 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { PasswordInput } from '@/components/password-input'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
 const formSchema = z
   .object({
-    name: z.string().min(1, 'Please enter your name.'),
+    name: z
+      .string()
+      .trim()
+      .min(1, 'Please enter your name.')
+      .transform((val) => sanitize(val)),
     username: z
       .string()
+      .trim()
       .min(3, 'Username must be at least 3 characters.')
       .max(20, 'Username must be at most 20 characters.')
       .regex(
         /^[a-z0-9_]+$/,
         'Username can only contain lowercase letters, numbers, and underscores.'
-      ),
-    email: z.email({
-      error: (iss) =>
-        iss.input === '' ? 'Please enter your email.' : undefined,
-    }),
-    contactNumber: z.string().optional(),
+      )
+      .transform((val) => sanitize(val)),
+    email: z
+      .string()
+      .trim()
+      .email({
+        error: (iss) =>
+          iss.input === '' ? 'Please enter your email.' : undefined,
+      })
+      .transform((val) => sanitize(val)),
+    contactNumber: z
+      .string()
+      .trim()
+      .transform((val) => sanitize(val)),
     password: z
       .string()
       .min(1, 'Please enter your password.')
@@ -153,7 +168,7 @@ export function SignUpForm({
           setIsUsernameAvailable(true)
         }
       } catch (error) {
-        console.error('Error checking username', error)
+        logger.error('Error checking username', error)
       } finally {
         setIsCheckingUsername(false)
       }

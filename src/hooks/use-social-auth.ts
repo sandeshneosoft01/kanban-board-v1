@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { auth } from '@/lib/firebase'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth-store'
+import { logger } from '@/lib/logger'
 
 export function useSocialAuth() {
   const [isSocialLoading, setIsSocialLoading] = useState(false)
@@ -59,7 +60,7 @@ export function useSocialAuth() {
 
       navigate({ to: '/', replace: true })
     } catch (error: any) {
-      console.error('Social Auth Error:', error)
+      logger.error('Social Auth Error:', error)
       toast.error(error.message || 'Error with social authentication.')
     } finally {
       setIsSocialLoading(false)

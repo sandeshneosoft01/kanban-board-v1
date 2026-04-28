@@ -10,8 +10,10 @@ import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
 import { auth, googleProvider, appleProvider } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
+import { sanitize } from '@/lib/sanitize'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
 import { useSocialAuth } from '@/hooks/use-social-auth'
+import { PasswordInput } from '@/components/password-input'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -24,12 +26,15 @@ import {
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
 import { Separator } from '@/components/ui/separator'
-import { PasswordInput } from '@/components/password-input'
 
 const formSchema = z.object({
-  email: z.email({
-    error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
-  }),
+  email: z
+    .string()
+    .trim()
+    .email({
+      error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
+    })
+    .transform((val) => sanitize(val)),
   password: z
     .string()
     .min(1, 'Please enter your password.')

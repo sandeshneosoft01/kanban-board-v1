@@ -5,6 +5,8 @@ import { zodResolver } from '@hookform/resolvers/zod'
 import { ChevronDownIcon, Loader2 } from 'lucide-react'
 import { format } from 'date-fns'
 import { cn } from '@/lib/utils'
+import { logger } from '@/lib/logger'
+import { sanitize } from '@/lib/sanitize'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -39,12 +41,19 @@ import { Calendar } from '@/components/ui/calendar'
 import { useTaskStore, type Task, type TaskPriority } from '@/stores/task-store'
 
 const taskSchema = z.object({
-  taskName: z.string().min(1, 'Task name is required'),
-  priority: z.string().min(1, 'Priority is required'),
+  taskName: z
+    .string()
+    .trim()
+    .min(1, 'Task name is required')
+    .transform((val) => sanitize(val)),
+  priority: z.string().trim().min(1, 'Priority is required'),
   deadline: z
     .any()
     .refine((val) => val instanceof Date, 'Please select a deadline'),
-  description: z.string().optional(),
+  description: z
+    .string()
+    .trim()
+    .transform((val) => sanitize(val)),
 })
 
 type TaskFormValues = z.infer<typeof taskSchema>
@@ -111,7 +120,7 @@ export function CreateEditTaskDialog({
       form.reset()
       onOpenChange(false)
     } catch (error) {
-      console.error('Failed to save task:', error)
+      logger.error('Failed to save task:', error)
     } finally {
       setIsLoading(false)
     }
