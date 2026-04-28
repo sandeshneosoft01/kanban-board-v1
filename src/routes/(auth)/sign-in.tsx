@@ -16,4 +16,13 @@ export const Route = createFileRoute('/(auth)/sign-in')({
   },
   component: SignIn,
   validateSearch: searchSchema,
+  head: () => ({
+    meta: [
+      { title: 'Sign In | KanbanBoard' },
+      {
+        name: 'description',
+        content: 'Sign in to your KanbanBoard account to manage your projects and tasks.',
+      },
+    ],
+  }),
 })

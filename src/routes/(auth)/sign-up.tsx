@@ -10,4 +10,13 @@ export const Route = createFileRoute('/(auth)/sign-up')({
     }
   },
   component: SignUp,
+  head: () => ({
+    meta: [
+      { title: 'Create Account | KanbanBoard' },
+      {
+        name: 'description',
+        content: 'Join KanbanBoard today and start organizing your tasks with ease.',
+      },
+    ],
+  }),
 })

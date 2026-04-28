@@ -49,10 +49,16 @@ export function Dashboard() {
 
       {/* ===== Main ===== */}
       <Main>
-        <div className='flex items-end justify-end mb-4'>
+        <div className='flex items-center justify-between mb-8'>
+          <div>
+            <h1 className='text-3xl font-bold tracking-tight'>Dashboard</h1>
+            <p className='text-muted-foreground'>
+              Welcome back! Here&apos;s an overview of your productivity.
+            </p>
+          </div>
           <Link to="/task-management" search={{ createTask: true }}>
             <Button>
-              <PlusIcon className="h-4 w-4" />
+              <PlusIcon className="h-4 w-4 mr-2" />
               Create Task
             </Button>
           </Link>

@@ -10,4 +10,13 @@ const taskManagementSearchSchema = z.object({
 export const Route = createFileRoute('/_authenticated/task-management/')({
   component: TaskManagement,
   validateSearch: (search) => taskManagementSearchSchema.parse(search),
+  head: () => ({
+    meta: [
+      { title: 'Task Management | KanbanBoard' },
+      {
+        name: 'description',
+        content: 'Organize and track your tasks using our interactive Kanban board.',
+      },
+    ],
+  }),
 })
