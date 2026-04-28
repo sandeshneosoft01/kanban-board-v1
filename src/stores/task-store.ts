@@ -21,7 +21,7 @@ export interface Task {
   id: string
   name: string
   priority: TaskPriority
-  deadline: string // Changed to string for easier JSON serialization
+  deadline: string // ISO date string for persistence compatibility
   description?: string
   stage: TaskStage
   order: number
@@ -72,7 +72,7 @@ export const useTaskStore = create<TaskState>()(
         set({ isLoading: true, error: null })
         try {
           const response = await api.get<Task[]>(`/tasks?userId=${user.accountNo}`)
-          // Ensure we sort by order initially
+          // Initial sort by order field before committing to state
           const sortedTasks = response.data.sort((a, b) => a.order - b.order)
           set({ tasks: sortedTasks, isLoading: false })
         } catch (error) {
@@ -204,26 +204,26 @@ export const useTaskStore = create<TaskState>()(
 
           const oldStage = task.stage
 
-          // Build the ordered list for the target stage (excluding the dragged task)
+          // Filter out the moving task and sort siblings by sequence order
           const stageTasks = tasks
             .filter((t) => t.stage === targetStage && t.id !== taskId)
             .sort((a, b) => a.order - b.order)
 
-          // Clamp target index
+          // Constrain target index within valid bounds
           const clampedIndex =
             targetIndex < 0 ? stageTasks.length : Math.min(targetIndex, stageTasks.length)
 
-          // Insert the task at the desired position
+          // Splice task into new position in the sorted array
           stageTasks.splice(clampedIndex, 0, task)
 
-          // Re-assign orders and update in backend
+          // Map new order indices for persistence
           const updates = stageTasks.map((t, i) => {
             const newOrder = i
             const newStage = targetStage
             return { id: t.id, order: newOrder, stage: newStage }
           })
 
-          // Update local state first for snappiness
+          // Optimistic update for UI responsiveness
           const newTasks = tasks.map((t) => {
             const update = updates.find((u) => u.id === t.id)
             if (update) {
@@ -232,14 +232,14 @@ export const useTaskStore = create<TaskState>()(
             return t
           })
 
-          // Normalise old stage if the task moved across columns
+          // Re-index previous stage if cross-column movement occurred
           if (oldStage !== targetStage) {
             normaliseOrders(newTasks, oldStage)
           }
 
           set({ tasks: [...newTasks] })
 
-          // Batch update
+          // Batch persist sequence updates
           await Promise.all(
             updates.map((u) => api.patch(`/tasks/${u.id}`, { order: u.order, stage: u.stage }))
           )
@@ -252,7 +252,7 @@ export const useTaskStore = create<TaskState>()(
     }),
     {
       name: 'kanban-task-storage',
-      partialize: (state) => ({ tasks: state.tasks }), // Only persist tasks
+      partialize: (state) => ({ tasks: state.tasks }), // Persist task data only
     }
   )
 )

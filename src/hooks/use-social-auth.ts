@@ -21,19 +21,19 @@ export function useSocialAuth() {
         throw new Error('No email found in social account.')
       }
 
-      // Check if user exists in JSON Server
+      // Verify if identity exists in the remote database
       const res = await api.get(`/users?email=${firebaseUser.email}`)
       let user = res.data[0]
 
       if (!user) {
-        // Sign up: Create user in JSON Server
+        // Provision new user record if first-time social authentication
         const newUser = {
           id: firebaseUser.uid,
           name: firebaseUser.displayName || 'Social User',
           username: firebaseUser.email.split('@')[0] + '_' + Math.random().toString(36).substring(7),
           email: firebaseUser.email,
           profileImage: firebaseUser.photoURL || null,
-          password: btoa('social-login-' + Math.random().toString(36)), // Dummy password
+          password: btoa('social-login-' + Math.random().toString(36)), // Placeholder credential for system compatibility
           contactNumber: firebaseUser.phoneNumber || '',
         }
         const createRes = await api.post('/users', newUser)
@@ -43,7 +43,7 @@ export function useSocialAuth() {
         toast.success(`Welcome back, ${user.name}!`)
       }
 
-      // Update Auth Store
+      // Synchronize application session state
       const mockUser = {
         accountNo: user.id,
         email: user.email,

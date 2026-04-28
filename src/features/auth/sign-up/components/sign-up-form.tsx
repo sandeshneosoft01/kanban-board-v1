@@ -1,16 +1,19 @@
 import { useState, useEffect, useRef } from 'react'
 import { z } from 'zod'
-import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from '@tanstack/react-router'
+import api from '@/services/api'
+import { RecaptchaVerifier } from 'firebase/auth'
 import { Loader2, UserPlus, User, X, Check } from 'lucide-react'
 import { toast } from 'sonner'
-import { cn } from '@/lib/utils'
-import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth-store'
+import { auth, googleProvider, appleProvider } from '@/lib/firebase'
+import { cn } from '@/lib/utils'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
-import { Button } from '@/components/ui/button'
+import { useSocialAuth } from '@/hooks/use-social-auth'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
+import { Button } from '@/components/ui/button'
 import {
   Form,
   FormControl,
@@ -20,11 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { PasswordInput } from '@/components/password-input'
 import { Separator } from '@/components/ui/separator'
-import { RecaptchaVerifier } from 'firebase/auth'
-import { auth, googleProvider, appleProvider } from '@/lib/firebase'
-import { useSocialAuth } from '@/hooks/use-social-auth'
+import { PasswordInput } from '@/components/password-input'
 
 const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/jpg', 'image/png']
 
@@ -40,7 +40,8 @@ const formSchema = z
         'Username can only contain lowercase letters, numbers, and underscores.'
       ),
     email: z.email({
-      error: (iss) => (iss.input === '' ? 'Please enter your email.' : undefined),
+      error: (iss) =>
+        iss.input === '' ? 'Please enter your email.' : undefined,
     }),
     contactNumber: z.string().optional(),
     password: z
@@ -78,15 +79,19 @@ export function SignUpForm({
 
   useEffect(() => {
     if (recaptchaWrapperRef.current && !recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaWrapperRef.current, {
-        size: 'normal',
-        callback: () => {
-          setIsRecaptchaVerified(true)
-        },
-        'expired-callback': () => {
-          setIsRecaptchaVerified(false)
-        },
-      })
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
+        auth,
+        recaptchaWrapperRef.current,
+        {
+          size: 'normal',
+          callback: () => {
+            setIsRecaptchaVerified(true)
+          },
+          'expired-callback': () => {
+            setIsRecaptchaVerified(false)
+          },
+        }
+      )
       recaptchaVerifierRef.current.render()
     }
 
@@ -170,7 +175,7 @@ export function SignUpForm({
     toast.promise(
       Promise.all([
         api.get(`/users?email=${data.email}`),
-        api.get(`/users?username=${data.username}`)
+        api.get(`/users?username=${data.username}`),
       ]).then(([emailRes, usernameRes]) => {
         if (emailRes.data.length > 0) {
           form.setError('email', {
@@ -189,7 +194,7 @@ export function SignUpForm({
           throw new Error('Username already taken.')
         }
 
-        // Remove confirmPassword before saving
+        // Sanitize data before persistence
         const { confirmPassword, profileImage, ...userData } = data
 
         const newUser = {
@@ -202,7 +207,7 @@ export function SignUpForm({
       }),
       {
         loading: 'Creating account...',
-        success: (res) => {
+        success: (res: any) => {
           setIsLoading(false)
           const user = res.data
 
@@ -217,16 +222,20 @@ export function SignUpForm({
 
           setUser(mockUser)
           const mockToken = btoa(
-            JSON.stringify({ id: user.id, email: user.email, exp: mockUser.exp })
+            JSON.stringify({
+              id: user.id,
+              email: user.email,
+              exp: mockUser.exp,
+            })
           )
           setAccessToken(mockToken)
 
-          // Navigate to home page
+          // Post-auth redirection
           navigate({ to: '/', replace: true })
 
           return `Account created for ${data.email}.`
         },
-        error: (err) => {
+        error: (err: any) => {
           setIsLoading(false)
           return err.message || 'Error creating account.'
         },
@@ -266,7 +275,9 @@ export function SignUpForm({
                     placeholder='johndoe123'
                     {...field}
                     onChange={(e) => {
-                      const value = e.target.value.toLowerCase().replace(/\s/g, '')
+                      const value = e.target.value
+                        .toLowerCase()
+                        .replace(/\s/g, '')
                       field.onChange(value)
                     }}
                     className={cn(
@@ -364,7 +375,7 @@ export function SignUpForm({
                         type='button'
                         variant='ghost'
                         size='icon'
-                        className='absolute -right-2 -top-2 h-6 w-6 rounded-full bg-destructive text-destructive-foreground hover:bg-destructive/90'
+                        className='text-destructive-foreground absolute -top-2 -right-2 h-6 w-6 rounded-full bg-destructive hover:bg-destructive/90'
                         onClick={() => {
                           setPreview(null)
                           form.setValue('profileImage', undefined)
@@ -427,7 +438,15 @@ export function SignUpForm({
             variant='outline'
             type='button'
             disabled={isLoading || isSocialLoading}
-            onClick={() => handleSocialLogin(googleProvider)}
+            onClick={() => {
+              if (!isRecaptchaVerified) {
+                toast.error(
+                  'Please complete the reCAPTCHA verification to use social login.'
+                )
+                return
+              }
+              handleSocialLogin(googleProvider)
+            }}
           >
             <svg
               className='mr-2 size-4 text-red-500'
@@ -450,7 +469,15 @@ export function SignUpForm({
             variant='outline'
             type='button'
             disabled={isLoading || isSocialLoading}
-            onClick={() => handleSocialLogin(appleProvider)}
+            onClick={() => {
+              if (!isRecaptchaVerified) {
+                toast.error(
+                  'Please complete the reCAPTCHA verification to use social login.'
+                )
+                return
+              }
+              handleSocialLogin(appleProvider)
+            }}
           >
             <svg
               className='mr-2 size-4'

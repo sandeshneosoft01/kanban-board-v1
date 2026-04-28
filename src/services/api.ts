@@ -12,7 +12,7 @@ export const api = axios.create({
 
 const pendingRequests: Record<string, ReturnType<typeof setTimeout>> = {}
 
-// ✅ REQUEST INTERCEPTOR
+// Request interceptor for injecting auth headers and tracking requests
 api.interceptors.request.use(
     (config) => {
         const token = useAuthStore.getState().accessToken
@@ -29,7 +29,7 @@ api.interceptors.request.use(
     (error) => Promise.reject(error)
 )
 
-// ✅ RESPONSE INTERCEPTOR
+// Response interceptor for session management and error normalization
 api.interceptors.response.use(
     (response) => {
         const requestId = (response.config as any)._requestId
@@ -48,10 +48,10 @@ api.interceptors.response.use(
 
         if (error.response?.status === 401) {
             console.warn('Unauthorized - Token expired or invalid')
-            // Clear the auth state
+            // Revoke local session state
             useAuthStore.getState().reset()
 
-            // Redirect to sign-in page if not already there
+            // Enforce redirect to sign-in if session is invalidated
             if (!window.location.pathname.startsWith('/sign-in')) {
                 window.location.href = '/sign-in'
             }

@@ -1,15 +1,19 @@
 import { useEffect, useRef, useState } from 'react'
 import { z } from 'zod'
-import { useNavigate } from '@tanstack/react-router'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { useNavigate } from '@tanstack/react-router'
+import api from '@/services/api'
+import { RecaptchaVerifier } from 'firebase/auth'
 import { Loader2, LogIn } from 'lucide-react'
 import { toast } from 'sonner'
 import { useAuthStore } from '@/stores/auth-store'
+import { auth, googleProvider, appleProvider } from '@/lib/firebase'
 import { cn } from '@/lib/utils'
-import api from '@/services/api'
 import { useScrollToError } from '@/hooks/use-scroll-to-error'
+import { useSocialAuth } from '@/hooks/use-social-auth'
 import { Button } from '@/components/ui/button'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Form,
   FormControl,
@@ -19,12 +23,8 @@ import {
   FormMessage,
 } from '@/components/ui/form'
 import { Input } from '@/components/ui/input'
-import { PasswordInput } from '@/components/password-input'
-import { Checkbox } from '@/components/ui/checkbox'
 import { Separator } from '@/components/ui/separator'
-import { RecaptchaVerifier } from 'firebase/auth'
-import { auth, googleProvider, appleProvider } from '@/lib/firebase'
-import { useSocialAuth } from '@/hooks/use-social-auth'
+import { PasswordInput } from '@/components/password-input'
 
 const formSchema = z.object({
   email: z.email({
@@ -56,17 +56,21 @@ export function UserAuthForm({
 
   useEffect(() => {
     if (recaptchaWrapperRef.current && !recaptchaVerifierRef.current) {
-      recaptchaVerifierRef.current = new RecaptchaVerifier(auth, recaptchaWrapperRef.current, {
-        size: 'normal',
-        callback: () => {
-          // reCAPTCHA solved
-          setIsRecaptchaVerified(true)
-        },
-        'expired-callback': () => {
-          // Response expired.
-          setIsRecaptchaVerified(false)
-        },
-      })
+      recaptchaVerifierRef.current = new RecaptchaVerifier(
+        auth,
+        recaptchaWrapperRef.current,
+        {
+          size: 'normal',
+          callback: () => {
+            // Update verification state on successful challenge
+            setIsRecaptchaVerified(true)
+          },
+          'expired-callback': () => {
+            // Reset verification state on challenge expiry
+            setIsRecaptchaVerified(false)
+          },
+        }
+      )
       recaptchaVerifierRef.current.render()
     }
 
@@ -101,27 +105,29 @@ export function UserAuthForm({
     setIsLoading(true)
 
     toast.promise(
-      api.get(`/users?email=${data.email}&password=${btoa(data.password)}`).then(async (res) => {
-        if (res.data.length === 0) {
-          form.setError('email', {
-            type: 'manual',
-            message: 'Invalid email or password.',
-          })
-          form.setError('password', {
-            type: 'manual',
-            message: 'Invalid email or password.',
-          })
-          setTimeout(() => form.setFocus('email'), 0)
-          throw new Error('Invalid email or password.')
-        }
-        return res.data[0]
-      }),
+      api
+        .get(`/users?email=${data.email}&password=${btoa(data.password)}`)
+        .then(async (res) => {
+          if (res.data.length === 0) {
+            form.setError('email', {
+              type: 'manual',
+              message: 'Invalid email or password.',
+            })
+            form.setError('password', {
+              type: 'manual',
+              message: 'Invalid email or password.',
+            })
+            setTimeout(() => form.setFocus('email'), 0)
+            throw new Error('Invalid email or password.')
+          }
+          return res.data[0]
+        }),
       {
         loading: 'Signing in...',
-        success: (user) => {
+        success: (user: any) => {
           setIsLoading(false)
 
-          // Mock successful authentication with expiry computed at success time
+          // Assemble session payload with calculated TTL
           const mockUser = {
             accountNo: user.id,
             email: user.email,
@@ -131,19 +137,25 @@ export function UserAuthForm({
             exp: Date.now() + 24 * 60 * 60 * 1000, // 24 hours from now
           }
 
-          // Set user and access token
+          // Persist identity and credentials to state
           setUser(mockUser, data.rememberMe)
-          // Generate a mock JWT-like token (Base64 encoded string)
-          const mockToken = btoa(JSON.stringify({ id: user.id, email: user.email, exp: mockUser.exp }))
+          // Encode session metadata for downstream consumption
+          const mockToken = btoa(
+            JSON.stringify({
+              id: user.id,
+              email: user.email,
+              exp: mockUser.exp,
+            })
+          )
           setAccessToken(mockToken, data.rememberMe)
 
-          // Redirect to the stored location or default to dashboard
+          // Resolve post-login navigation target
           const targetPath = redirectTo || '/'
           navigate({ to: targetPath, replace: true })
 
           return `Welcome back, ${user.email}!`
         },
-        error: (err) => {
+        error: (err: any) => {
           setIsLoading(false)
           return err.message || 'Error signing in.'
         },
@@ -199,7 +211,7 @@ export function UserAuthForm({
                 </FormControl>
                 <label
                   htmlFor='rememberMe'
-                  className='text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
+                  className='text-sm leading-none font-medium peer-disabled:cursor-not-allowed peer-disabled:opacity-70'
                 >
                   Remember Me
                 </label>
@@ -243,7 +255,15 @@ export function UserAuthForm({
             variant='outline'
             type='button'
             disabled={isLoading || isSocialLoading}
-            onClick={() => handleSocialLogin(googleProvider)}
+            onClick={() => {
+              if (!isRecaptchaVerified) {
+                toast.error(
+                  'Please complete the reCAPTCHA verification to use social login.'
+                )
+                return
+              }
+              handleSocialLogin(googleProvider)
+            }}
           >
             <svg
               className='mr-2 size-4 text-red-500'
@@ -266,7 +286,15 @@ export function UserAuthForm({
             variant='outline'
             type='button'
             disabled={isLoading || isSocialLoading}
-            onClick={() => handleSocialLogin(appleProvider)}
+            onClick={() => {
+              if (!isRecaptchaVerified) {
+                toast.error(
+                  'Please complete the reCAPTCHA verification to use social login.'
+                )
+                return
+              }
+              handleSocialLogin(appleProvider)
+            }}
           >
             <svg
               className='mr-2 size-4'
